@@ -1,0 +1,30 @@
+{
+  "name": "S&P 500 Калкулатор",
+  "short_name": "S&P 500",
+  "description": "Калкулатор за лихва върху лихва при инвестиция в индексен фонд върху S&P 500, с живи цени на SXR8.",
+  "lang": "bg",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
