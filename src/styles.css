@@ -1,0 +1,654 @@
+/* ---------------------------------------------------------------------------
+   Design tokens
+   --------------------------------------------------------------------------- */
+:root {
+  --bg: #080808;
+  --surface: #0d0d0d;
+  --surface-2: #111;
+  --border: #1a1a1a;
+  --border-2: #1e1e1e;
+  --track: #2a2a2a;
+
+  --text: #f0f0f0;
+  --muted: #888;
+  --dim: #555;
+  /* Raised from #333: against #080808 that was roughly 1.6:1 contrast, which is
+     effectively invisible on a phone in daylight. Still clearly a quiet tone. */
+  --faint: #4a4a4a;
+  --label: #555;
+
+  --accent: #e8ff5a;
+  --up: #5ee3b9;
+  --down: #f87171;
+  --gain: #4ade80;
+  --invested: #3b82f6;
+
+  --radius-card: 12px;
+  --radius-panel: 10px;
+  --radius-stat: 8px;
+  --radius-input: 6px;
+
+  --serif: 'Times New Roman', 'Tinos', 'Liberation Serif', Times, serif;
+  --display: 'Syne', ui-sans-serif, system-ui, sans-serif;
+
+  /* Page gutter, widened by the notch inset where there is one. */
+  --gutter: clamp(0.875rem, 0.5rem + 1.5vw, 1.5rem);
+
+  color-scheme: dark;
+}
+
+/* Fluid root size replaces the old `zoom: 1.3` on the app shell.
+   `zoom` scaled the layout AND shrank the usable viewport by 30%, which is what
+   pushed the heading and the range tabs off screen on a phone. Sizing the root
+   instead keeps 1rem ≈ 16px on a phone and ≈ 20px on a desktop, so the desktop
+   proportions of the original survive while mobile gets its full width back. */
+html {
+  font-size: clamp(16px, 0.9rem + 0.4vw, 20px);
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  /* Nothing in this layout is meant to scroll sideways; this keeps a stray
+     wide child from silently reintroducing the bug the screenshot showed. */
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Currency figures change under sliders and live price updates — tabular
+   numerals stop them from jittering as digit widths change. */
+.num {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Shell
+   --------------------------------------------------------------------------- */
+.shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(1.25rem, 1rem + 2vw, 2rem) var(--gutter);
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}
+
+.container {
+  max-width: 47.5rem;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+   Masthead
+   --------------------------------------------------------------------------- */
+.eyebrow {
+  margin-bottom: 0.25rem;
+  color: var(--dim);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1875em;
+  text-transform: uppercase;
+}
+
+/* The heading was `white-space: nowrap`, so "S&P 500 Лихва върху лихва" ran
+   straight off the right edge of the phone. It wraps now. */
+.title {
+  margin: 0 0 0.25rem;
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 1.1rem + 1.8vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.title-accent {
+  color: var(--accent);
+}
+
+.lede {
+  margin: 0 0 clamp(1.25rem, 1rem + 1.5vw, 2rem);
+  color: var(--dim);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------------
+   Panels
+   --------------------------------------------------------------------------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+}
+
+.card-label {
+  color: var(--dim);
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.375rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Live quote card
+   --------------------------------------------------------------------------- */
+.quote {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 1.25rem 1.25rem 1rem;
+  margin-bottom: clamp(1.5rem, 1.25rem + 1.5vw, 2.25rem);
+}
+
+.quote-price {
+  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.125rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.quote-delta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.quote-delta-value {
+  font-weight: 600;
+}
+
+.quote-delta-range {
+  color: var(--label);
+}
+
+.quote-chart {
+  height: clamp(11rem, 9rem + 12vw, 13.75rem);
+  margin-top: 0.25rem;
+}
+
+.chart-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--dim);
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.chart-note-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.retry {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--track);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-height: 2.25rem;
+}
+
+.retry:hover {
+  border-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Range tabs (1D … Max)
+
+   Seven tabs in a `width: fit-content` flex row overflowed the phone — the
+   screenshot shows "5Y" clipped and "Max" gone entirely. They now shrink to fit
+   and, on the narrowest screens, scroll horizontally instead of overflowing.
+   --------------------------------------------------------------------------- */
+.range-tabs {
+  display: flex;
+  gap: 2px;
+  margin-top: 0.875rem;
+  padding: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.range-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.range-tab {
+  flex: 0 0 auto;
+  background: transparent;
+  color: var(--dim);
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 0.8125rem;
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  /* Keeps the tap target reasonable without making the control look chunky. */
+  min-height: 2rem;
+}
+
+.range-tab:hover {
+  color: var(--text);
+}
+
+.range-tab[aria-pressed='true'] {
+  background: #1f1f1f;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------------------
+   Stat cards
+   --------------------------------------------------------------------------- */
+.stats {
+  display: grid;
+  /* One column on the narrowest phones, then the headline figure spans a
+     two-column pair, then three across once there is real room. Three 140px
+     cards fighting over a 300px viewport is what made this a tall stack. */
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-bottom: clamp(1.5rem, 1.25rem + 1.5vw, 2rem);
+}
+
+@media (min-width: 24em) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stat:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 34em) {
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .stat:first-child {
+    grid-column: auto;
+  }
+}
+
+.stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-stat);
+  padding: 0.875rem 1.125rem;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+.stat-value--accent {
+  color: var(--accent);
+}
+
+.stat-value--gain {
+  color: var(--gain);
+}
+
+.stat-pct {
+  font-size: 0.8125rem;
+  color: var(--dim);
+  margin-left: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Projection chart
+   --------------------------------------------------------------------------- */
+.projection {
+  margin-bottom: clamp(1.5rem, 1.25rem + 1.5vw, 2.25rem);
+  padding: 1.25rem 0.5rem 0.625rem;
+}
+
+.projection-chart {
+  height: clamp(11rem, 9rem + 12vw, 13.75rem);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1rem;
+  padding: 0 0.75rem 0.25rem;
+  color: var(--dim);
+  font-size: 0.6875rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.legend-swatch {
+  width: 0.625rem;
+  height: 2px;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Controls
+   --------------------------------------------------------------------------- */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem 1.5rem;
+}
+
+/* Matches the stat-card breakpoint: the two amount fields pair up as soon as
+   there is room for them, which keeps the controls within a thumb's reach
+   instead of pushing them further down the page. */
+@media (min-width: 24em) {
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .control--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.control-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.control-name {
+  color: var(--muted);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.control-value {
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--faint);
+  font-size: 0.625rem;
+}
+
+.scale-mid {
+  color: var(--dim);
+}
+
+.field-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Sliders
+
+   The old track was a 2px-tall element, so the whole slider was a 2px-tall tap
+   target. The input is now a comfortable height with the thin track painted
+   inside it, which is far easier to hit with a thumb.
+   --------------------------------------------------------------------------- */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 2.5rem;
+  margin: 0;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  /* Vertical drags stay page scrolls; horizontal ones move the thumb. */
+  touch-action: pan-y;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--track);
+  border-radius: 2px;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.4375rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type='range']::-moz-range-track {
+  height: 2px;
+  background: var(--track);
+  border-radius: 2px;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(232, 255, 90, 0.28);
+}
+
+input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(232, 255, 90, 0.28);
+}
+
+@media (pointer: coarse) {
+  input[type='range']::-webkit-slider-thumb {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: -0.5625rem;
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Number inputs
+   --------------------------------------------------------------------------- */
+input[type='text'].amount {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--track);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.625rem 0.75rem;
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  /* iOS Safari zooms the whole page when a focused field is under 16px.
+     The old 13px field triggered it on every tap. */
+  font-size: max(16px, 0.875rem);
+  line-height: 1.4;
+  outline: none;
+  min-height: 2.75rem;
+}
+
+input[type='text'].amount:focus {
+  border-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Save
+   --------------------------------------------------------------------------- */
+.save-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.875rem;
+  margin-top: 1.5rem;
+}
+
+.save-btn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius-input);
+  padding: 0.75rem 1.5rem;
+  font-family: var(--serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  min-height: 2.75rem;
+}
+
+@media (max-width: 26em) {
+  /* A thumb-friendly full-width button beats a small one adrift on a phone. */
+  .save-btn {
+    width: 100%;
+  }
+}
+
+.save-btn:hover {
+  opacity: 0.85;
+}
+
+.save-btn.saved {
+  background: var(--gain);
+  cursor: default;
+}
+
+.save-hint {
+  color: var(--dim);
+  font-size: 0.6875rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Monthly-income panel
+   --------------------------------------------------------------------------- */
+.income {
+  margin-top: 2rem;
+  padding: 1.25rem clamp(1rem, 0.75rem + 1vw, 1.5rem);
+}
+
+.income-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.income-value {
+  font-size: clamp(1.5rem, 1.25rem + 1vw, 1.75rem);
+  font-weight: 700;
+  color: var(--gain);
+  line-height: 1.1;
+}
+
+.income-for {
+  color: var(--label);
+  font-size: 0.6875rem;
+  padding-bottom: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Footer
+   --------------------------------------------------------------------------- */
+.disclaimer {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  color: var(--dim);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------------------
+   Tooltip (shared by both charts)
+   --------------------------------------------------------------------------- */
+.tip {
+  background: var(--surface);
+  border: 1px solid var(--faint);
+  border-radius: var(--radius-input);
+  padding: 0.625rem 0.875rem;
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+}
+
+.tip-label {
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.tip-row {
+  margin-bottom: 0.125rem;
+}
+
+/* ---------------------------------------------------------------------------
+   A11y helpers
+   --------------------------------------------------------------------------- */
+:where(button, [href], input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
