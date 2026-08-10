@@ -9,7 +9,23 @@
     <meta name="description" content="Калкулатор за лихва върху лихва при инвестиция в индексен фонд върху S&P 500, с живи цени на SXR8." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Home-screen label. The full title truncates to an ellipsis under the icon. -->
+    <meta name="apple-mobile-web-app-title" content="S&P 500" />
     <title>S&P 500 Калкулатор</title>
+
+    <!-- .ico first as the fallback for browsers without SVG favicon support
+         (Safari below 16); anything newer prefers the vector and stays sharp at
+         any zoom or display density. -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- iOS ignores SVG here and will upscale whatever single PNG it is given,
+         so each device size it asks for is supplied at its exact pixel size. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- Fonts move here from a runtime-injected @import: that pattern blocks render and
          re-parses on every mount. preconnect + a single stylesheet is measurably faster. -->
