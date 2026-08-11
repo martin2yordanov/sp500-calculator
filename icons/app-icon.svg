@@ -45,16 +45,31 @@
         fill="none" stroke="#5ee3b9" stroke-width="66"
         stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- "500" in the app's text colour, matching how the h1 sets "S&P 500" in
-       #f0f0f0 and reserves the lime for the tagline. Monoline construction:
-       the 5 is a bar, a stem and an elliptical bowl; the zeros are ellipse
-       rings on the same stroke weight and cap height. -->
-  <g fill="none" stroke="#f0f0f0" stroke-width="54"
-     stroke-linecap="round" stroke-linejoin="round">
-    <path d="M209 672 H343"/>
-    <path d="M209 672 V745"/>
-    <path d="M209 745 A 78 64 0 1 1 209 851"/>
+  <!--
+    "500" in the app's text colour, matching how the h1 sets "S&P 500" in
+    #f0f0f0 and reserves the lime for the tagline.
+
+    Monoline construction: the 5 is one path — bar, stem, elliptical bowl — so
+    its corner is a real mitred join rather than two round caps overlapping; the
+    zeros are ellipse rings on the same weight and cap height.
+
+    Weight 30 with butt caps and mitred joins. Round caps at 54 read as blobby
+    at any size; flat terminals and a sharp corner are what make a thin monoline
+    look drawn rather than bulbous. Tracking is opened up to 92 units between
+    glyph boxes, because a light weight needs more air around it than a heavy
+    one to avoid looking cramped.
+
+    Fragility at tiny sizes is not a concern here: this file only produces
+    152px and up, where a 30/1024 stroke lands at 4.5px or more. The favicon
+    has no wordmark at all.
+
+    The bowl ends at 848, not 851, so the 5's outer bottom aligns with the
+    zeros' (cy 760 ± ry 88) at any stroke weight.
+  -->
+  <g fill="none" stroke="#f0f0f0" stroke-width="30"
+     stroke-linecap="butt" stroke-linejoin="miter">
+    <path d="M323 672 L189 672 L189 745 A 78 64 0 1 1 189 848"/>
+    <ellipse cx="512" cy="760" rx="67" ry="88"/>
+    <ellipse cx="768" cy="760" rx="67" ry="88"/>
   </g>
-  <ellipse cx="512" cy="760" rx="67" ry="88" fill="none" stroke="#f0f0f0" stroke-width="54"/>
-  <ellipse cx="748" cy="760" rx="67" ry="88" fill="none" stroke="#f0f0f0" stroke-width="54"/>
 </svg>
