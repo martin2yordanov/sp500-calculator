@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>S&amp;P 500</title>
+  <!--
+    App icon: ascending price line above a "500" wordmark. Source for the
+    152–512px rasters (iOS home screen, Android, manifest).
+
+    The tab favicon is a different file on purpose — public/favicon.svg drops the
+    wordmark, because three digits across 16 pixels is mud. See the README.
+
+    The digits are drawn as paths rather than set as type. A favicon renders
+    without fetching external resources, so a webfont would never arrive, and a
+    system font stack would render differently here than on the viewer's machine
+    — the committed PNGs and the live SVG would drift apart. Geometry is the only
+    thing that renders identically everywhere.
+  -->
+  <defs>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5ee3b9" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#5ee3b9" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#0d0d0d"/>
+
+  <!--
+    The fill's top edge is the line continued off both frame edges along its own
+    end slopes, so it contains no horizontal or vertical segments at all.
+    Closing it under the line's endpoints left vertical boundaries that read as a
+    rectangle pasted under the line; flattening those into horizontal shelves
+    only traded them for a visible step at the top right. Following the slopes
+    (to y=631 at x=0, y=106 at x=1024) leaves nothing to catch the eye — the
+    tint simply carries on past where the stroke's rounded caps stop.
+  -->
+  <path d="M0 631 L140 520 L330 369 L470 456 L660 273 L884 170 L1024 106 L1024 1024 L0 1024 Z"
+        fill="url(#area)"/>
+
+  <path d="M140 520 L330 369 L470 456 L660 273 L884 170"
+        fill="none" stroke="#5ee3b9" stroke-width="66"
+        stroke-linecap="round" stroke-linejoin="round"
+        filter="url(#glow)" opacity="0.7"/>
+  <path d="M140 520 L330 369 L470 456 L660 273 L884 170"
+        fill="none" stroke="#5ee3b9" stroke-width="66"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- "500" in the app's text colour, matching how the h1 sets "S&P 500" in
+       #f0f0f0 and reserves the lime for the tagline. Monoline construction:
+       the 5 is a bar, a stem and an elliptical bowl; the zeros are ellipse
+       rings on the same stroke weight and cap height. -->
+  <g fill="none" stroke="#f0f0f0" stroke-width="54"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M209 672 H343"/>
+    <path d="M209 672 V745"/>
+    <path d="M209 745 A 78 64 0 1 1 209 851"/>
+  </g>
+  <ellipse cx="512" cy="760" rx="67" ry="88" fill="none" stroke="#f0f0f0" stroke-width="54"/>
+  <ellipse cx="748" cy="760" rx="67" ry="88" fill="none" stroke="#f0f0f0" stroke-width="54"/>
+</svg>

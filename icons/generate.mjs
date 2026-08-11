@@ -19,12 +19,14 @@ const OUT = path.join(ROOT, 'public')
 
 // Sizes iOS and Android ask for by name, so nothing is ever upscaled on device.
 // 152 = iPad, 167 = iPad Pro, 180 = iPhone @3x, 192/512 = web app manifest.
-// No 1024 master: favicon.svg is the vector master, a PNG of it would be dead
+// All carry the "500" wordmark; all are large enough to read it.
+// No 1024 master: the SVGs are the vector masters, a PNG of one would be dead
 // weight in the deployed bundle.
 const LARGE = [512, 192, 180, 167, 152]
-// Rasterised from the glow-free source. These are held in memory as the .ico
-// entries rather than written out — favicon.ico is what browsers ask for, and
-// separate 16/32/48 PNGs would just be unreferenced files in public/.
+// Rasterised from public/favicon.svg, which has no wordmark — three digits in
+// 16px is unreadable. Held in memory as the .ico entries rather than written
+// out, since favicon.ico is what browsers ask for and separate 16/32/48 PNGs
+// would just be unreferenced files in public/.
 const SMALL = [48, 32, 16]
 
 const EXECUTABLE = process.env.CHROME_PATH || undefined
@@ -78,8 +80,8 @@ function buildIco(images) {
 
 const browser = await chromium.launch({ executablePath: EXECUTABLE })
 
-const largeSvg = fs.readFileSync(path.join(OUT, 'favicon.svg'), 'utf8')
-const smallSvg = fs.readFileSync(path.join(ROOT, 'icons', 'favicon-small.svg'), 'utf8')
+const largeSvg = fs.readFileSync(path.join(ROOT, 'icons', 'app-icon.svg'), 'utf8')
+const smallSvg = fs.readFileSync(path.join(OUT, 'favicon.svg'), 'utf8')
 
 for (const size of LARGE) {
   const buffer = await raster(browser, largeSvg, size)
