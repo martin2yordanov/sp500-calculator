@@ -47,6 +47,44 @@ async function raster(browser, svg, size) {
   return buffer
 }
 
+// The wordmark is set as type, so a missing Liberation Sans would silently
+// substitute another family and shift the metrics. `document.fonts.check()` is
+// no help — it returns true even for a family that does not exist — so the guard
+// measures the rendered text instead. Expected width with Liberation Sans Bold
+// at font-size 175, centred on x=512.
+const WORDMARK_WIDTH = 711.3
+const WORDMARK_TOLERANCE = 0.02
+
+async function assertWordmark(browser, svg) {
+  const ctx = await browser.newContext({ viewport: { width: 1024, height: 1024 } })
+  const page = await ctx.newPage()
+  await page.setContent(
+    `<style>html,body{margin:0}svg{width:1024px;height:1024px}</style>${svg}`,
+    { waitUntil: 'load' },
+  )
+  const box = await page.evaluate(() => {
+    const nodes = document.querySelectorAll('text')
+    if (!nodes.length) return null
+    const b = nodes[nodes.length - 1].getBBox()
+    return { width: b.width, centre: b.x + b.width / 2 }
+  })
+  await ctx.close()
+
+  if (!box) return
+  const drift = Math.abs(box.width - WORDMARK_WIDTH) / WORDMARK_WIDTH
+  if (drift > WORDMARK_TOLERANCE) {
+    throw new Error(
+      `Wordmark is ${box.width.toFixed(1)}px wide, expected ~${WORDMARK_WIDTH} ` +
+        `(${(drift * 100).toFixed(1)}% off). Liberation Sans is probably missing and ` +
+        `another font was substituted. Install it, or re-centre the wordmark and ` +
+        `update WORDMARK_WIDTH.`,
+    )
+  }
+  console.log(
+    `wordmark ${box.width.toFixed(1)}px wide, centred at ${box.centre.toFixed(1)} — ok`,
+  )
+}
+
 /**
  * Minimal multi-image ICO writer: 6-byte ICONDIR, then one 16-byte ICONDIRENTRY
  * per image, then the PNG payloads. PNG-in-ICO is understood by every browser
@@ -82,6 +120,8 @@ const browser = await chromium.launch({ executablePath: EXECUTABLE })
 
 const largeSvg = fs.readFileSync(path.join(ROOT, 'icons', 'app-icon.svg'), 'utf8')
 const smallSvg = fs.readFileSync(path.join(OUT, 'favicon.svg'), 'utf8')
+
+await assertWordmark(browser, largeSvg)
 
 for (const size of LARGE) {
   const buffer = await raster(browser, largeSvg, size)

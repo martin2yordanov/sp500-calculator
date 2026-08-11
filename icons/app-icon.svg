@@ -1,75 +1,63 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <title>S&amp;P 500</title>
   <!--
-    App icon: ascending price line above a "500" wordmark. Source for the
-    152–512px rasters (iOS home screen, Android, manifest).
+    App icon: a jagged rising line ending in an arrowhead, over an "S&P 500"
+    wordmark. Source for the 152–512px rasters (iOS home screen, Android,
+    manifest). The tab favicon is public/favicon.svg — same artwork without the
+    wordmark, because seven glyphs cannot survive 16px.
 
-    The tab favicon is a different file on purpose — public/favicon.svg drops the
-    wordmark, because three digits across 16 pixels is mud. See the README.
+    The wordmark is set as type rather than drawn as paths, which is safe here
+    only because this file is never served: the generator rasterises it once and
+    the PNGs ship. public/favicon.svg, which IS served, contains no text at all,
+    so no viewer ever depends on a font resolving.
 
-    The digits are drawn as paths rather than set as type. A favicon renders
-    without fetching external resources, so a webfont would never arrive, and a
-    system font stack would render differently here than on the viewer's machine
-    — the committed PNGs and the live SVG would drift apart. Geometry is the only
-    thing that renders identically everywhere.
+    Regenerating needs Liberation Sans (Arial or Helvetica substitute
+    acceptably — the stack falls back in that order). Without any of them the
+    metrics shift and the wordmark will need re-centring.
   -->
   <defs>
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#5ee3b9" stop-opacity="0.34"/>
+      <stop offset="0%" stop-color="#5ee3b9" stop-opacity="0.30"/>
       <stop offset="100%" stop-color="#5ee3b9" stop-opacity="0"/>
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="15"/>
+    <filter id="lineGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="textGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="13"/>
     </filter>
   </defs>
 
-  <rect width="1024" height="1024" fill="#0d0d0d"/>
+  <rect width="1024" height="1024" fill="#0b0f10"/>
 
   <!--
-    The fill's top edge is the line continued off both frame edges along its own
-    end slopes, so it contains no horizontal or vertical segments at all.
-    Closing it under the line's endpoints left vertical boundaries that read as a
-    rectangle pasted under the line; flattening those into horizontal shelves
-    only traded them for a visible step at the top right. Following the slopes
-    (to y=631 at x=0, y=106 at x=1024) leaves nothing to catch the eye — the
-    tint simply carries on past where the stroke's rounded caps stop.
+    Both ends of the fill continue along the adjacent segment's slope to the
+    frame edge (y=747 at x=0, y=9 at x=1024) so its boundary contains no
+    straight edge. Closing it under the line's end instead left a long diagonal
+    wedge pointing at the corner, which was the most visible thing in the icon.
   -->
-  <path d="M0 631 L140 520 L330 369 L470 456 L660 273 L884 170 L1024 106 L1024 1024 L0 1024 Z"
+  <path d="M0 747 L120 620 L300 430 L395 510 L520 330 L620 440 L800 248 L1024 9 L1024 1024 L0 1024 Z"
         fill="url(#area)"/>
 
-  <path d="M140 520 L330 369 L470 456 L660 273 L884 170"
-        fill="none" stroke="#5ee3b9" stroke-width="66"
-        stroke-linecap="round" stroke-linejoin="round"
-        filter="url(#glow)" opacity="0.7"/>
-  <path d="M140 520 L330 369 L470 456 L660 273 L884 170"
-        fill="none" stroke="#5ee3b9" stroke-width="66"
+  <!-- Glow pass and sharp pass share the same geometry; the arrowhead is a
+       plain triangle aligned to the final segment's direction. -->
+  <g filter="url(#lineGlow)" opacity="0.75">
+    <path d="M120 620 L300 430 L395 510 L520 330 L620 440 L800 248"
+          fill="none" stroke="#5ee3b9" stroke-width="58"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M880 162 L853 281 L763 197 Z" fill="#5ee3b9"/>
+  </g>
+  <path d="M120 620 L300 430 L395 510 L520 330 L620 440 L800 248"
+        fill="none" stroke="#5ee3b9" stroke-width="58"
         stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M880 162 L853 281 L763 197 Z" fill="#5ee3b9"/>
 
-  <!--
-    "500" in the app's text colour, matching how the h1 sets "S&P 500" in
-    #f0f0f0 and reserves the lime for the tagline.
-
-    Monoline construction: the 5 is one path — bar, stem, elliptical bowl — so
-    its corner is a real mitred join rather than two round caps overlapping; the
-    zeros are ellipse rings on the same weight and cap height.
-
-    Weight 30 with butt caps and mitred joins. Round caps at 54 read as blobby
-    at any size; flat terminals and a sharp corner are what make a thin monoline
-    look drawn rather than bulbous. Tracking is opened up to 92 units between
-    glyph boxes, because a light weight needs more air around it than a heavy
-    one to avoid looking cramped.
-
-    Fragility at tiny sizes is not a concern here: this file only produces
-    152px and up, where a 30/1024 stroke lands at 4.5px or more. The favicon
-    has no wordmark at all.
-
-    The bowl ends at 848, not 851, so the 5's outer bottom aligns with the
-    zeros' (cy 760 ± ry 88) at any stroke weight.
-  -->
-  <g fill="none" stroke="#f0f0f0" stroke-width="30"
-     stroke-linecap="butt" stroke-linejoin="miter">
-    <path d="M323 672 L189 672 L189 745 A 78 64 0 1 1 189 848"/>
-    <ellipse cx="512" cy="760" rx="67" ry="88"/>
-    <ellipse cx="768" cy="760" rx="67" ry="88"/>
+  <!-- Lifted a step above the line's mint: the wordmark's thinner strokes read
+       dimmer than the heavy stroke at the same colour, so matching hex values
+       would not have matched apparent brightness. -->
+  <g font-family="Liberation Sans, Arial, Helvetica, sans-serif" font-weight="bold"
+     font-size="175" letter-spacing="2" text-anchor="middle" fill="#8ff2dc">
+    <text x="512" y="836" filter="url(#textGlow)" opacity="0.6">S&amp;P 500</text>
+    <text x="512" y="836">S&amp;P 500</text>
   </g>
 </svg>
