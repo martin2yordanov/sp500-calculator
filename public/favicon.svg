@@ -1,36 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <title>S&amp;P 500 Калкулатор</title>
   <!--
-    Ascending price line over a gradient area, mirroring the live SXR8 chart in
-    the app (same mint, same soft glow from its feGaussianBlur filter).
+    Tab favicon, and the source for the 16/32/48px entries in favicon.ico.
 
-    Full-bleed square on purpose: iOS applies its own rounded mask to
-    apple-touch-icon, so baking corners in here would double-round them.
+    Deliberately without the "500" from icons/app-icon.svg: a tab renders this at
+    16px, where three digits get about five pixels each and turn to mud. The
+    wordmark appears at 152px and up, where it can actually be read.
 
-    The blur radius is small relative to the 1024 canvas, so it scales down to
-    well under a pixel at favicon sizes and never smears the line. The small
-    raster sizes are generated from favicon-small.svg, which drops the glow
-    entirely — at 16px it is imperceptible and only costs sharpness.
+    Also without the app icon's glow — at these sizes the blur is imperceptible
+    but still costs contrast at the line's edge, so dropping it buys sharpness
+    for free.
+
+    Full-bleed square with no corner radius: iOS applies its own mask to
+    apple-touch-icon, and rounding here would round already-rounded corners.
   -->
   <defs>
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#5ee3b9" stop-opacity="0.34"/>
       <stop offset="100%" stop-color="#5ee3b9" stop-opacity="0"/>
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="17"/>
-    </filter>
   </defs>
 
   <rect width="1024" height="1024" fill="#0d0d0d"/>
 
   <path d="M140 690 L330 500 L470 610 L660 380 L884 250 L884 902 L140 902 Z"
         fill="url(#area)"/>
-
-  <path d="M140 690 L330 500 L470 610 L660 380 L884 250"
-        fill="none" stroke="#5ee3b9" stroke-width="78"
-        stroke-linecap="round" stroke-linejoin="round"
-        filter="url(#glow)" opacity="0.7"/>
 
   <path d="M140 690 L330 500 L470 610 L660 380 L884 250"
         fill="none" stroke="#5ee3b9" stroke-width="78"
