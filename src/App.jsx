@@ -7,11 +7,18 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import AmountField from './components/AmountField'
 import Sxr8Chart from './components/Sxr8Chart'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { averageMonthlyGain, buildProjection } from './lib/compound'
 import { formatAxisMoney, formatCompactEur } from './lib/format'
-import { BOUNDS, loadSettings, parseAmount, saveSettings } from './lib/settings'
+import {
+  BOUNDS,
+  DEFAULTS,
+  loadSettings,
+  parseAmount,
+  saveSettings,
+} from './lib/settings'
 
 const ACCENT = '#e8ff5a'
 const INVESTED = '#3b82f6'
@@ -75,6 +82,12 @@ export default function App() {
     : 0
   const monthlyGain = averageMonthlyGain(rows, profitYear)
 
+  const isDefault =
+    years === DEFAULTS.years &&
+    rate === DEFAULTS.rate &&
+    monthly === DEFAULTS.monthly &&
+    initial === DEFAULTS.initial
+
   const handleSave = useCallback(async () => {
     const params = new URLSearchParams({
       y: String(years),
@@ -94,6 +107,17 @@ export default function App() {
     setTimeout(() => setSaved(false), 2000)
   }, [years, monthly, initial, rate])
 
+  const handleReset = useCallback(() => {
+    setYears(DEFAULTS.years)
+    setRate(DEFAULTS.rate)
+    setMonthlyText(String(DEFAULTS.monthly))
+    setInitialText(String(DEFAULTS.initial))
+    setProfitYear(DEFAULTS.years)
+    // Clear the query string too, otherwise a reload would restore the values
+    // that were just discarded.
+    window.history.replaceState({}, '', window.location.pathname)
+  }, [])
+
   return (
     <div className="shell">
       <div className="container">
@@ -109,6 +133,12 @@ export default function App() {
 
         <Sxr8Chart />
 
+        {/*
+          Result first, then the controls that drive it. The projection chart
+          used to sit between them, which pushed the stat cards off the top of
+          the screen on a phone the moment a slider was within reach — you could
+          not see the number you were changing.
+        */}
         <div className="stats">
           <div className="stat">
             <div className="card-label">Крайна стойност</div>
@@ -130,6 +160,97 @@ export default function App() {
               </span>
             </div>
           </div>
+        </div>
+
+        <div className="controls">
+          <div className="control--full">
+            <div className="control-head">
+              <label className="control-name" htmlFor="years">
+                Години
+              </label>
+              <span className="control-value num">{years} г.</span>
+            </div>
+            <input
+              id="years"
+              type="range"
+              min={BOUNDS.years.min}
+              max={BOUNDS.years.max}
+              step={BOUNDS.years.step}
+              value={years}
+              aria-valuetext={`${years} години`}
+              onChange={(event) => setYears(Number(event.target.value))}
+            />
+            <div className="scale">
+              <span>{BOUNDS.years.min}</span>
+              <span>{BOUNDS.years.max}</span>
+            </div>
+          </div>
+
+          <div className="control--full">
+            <div className="control-head">
+              <label className="control-name" htmlFor="rate">
+                Годишна доходност
+              </label>
+              <span className="control-value num">{rate}%</span>
+            </div>
+            <input
+              id="rate"
+              type="range"
+              min={BOUNDS.rate.min}
+              max={BOUNDS.rate.max}
+              step={BOUNDS.rate.step}
+              value={rate}
+              aria-valuetext={`${rate} процента годишно`}
+              onChange={(event) => setRate(Number(event.target.value))}
+            />
+            <div className="scale">
+              <span>{BOUNDS.rate.min}%</span>
+              <span className="scale-mid">S&amp;P ср. ~10.5%</span>
+              <span>{BOUNDS.rate.max}%</span>
+            </div>
+          </div>
+
+          <AmountField
+            id="monthly"
+            label="Месечно (€)"
+            value={monthly}
+            text={monthlyText}
+            step={50}
+            onChange={setMonthlyText}
+            onCommit={() => setMonthlyText(String(monthly))}
+          />
+
+          <AmountField
+            id="initial"
+            label="Начална сума (€)"
+            value={initial}
+            text={initialText}
+            step={500}
+            onChange={setInitialText}
+            onCommit={() => setInitialText(String(initial))}
+          />
+        </div>
+
+        <div className="save-row">
+          <button
+            type="button"
+            className={`save-btn${saved ? ' saved' : ''}`}
+            onClick={handleSave}
+          >
+            {saved ? '✓ Запазено' : 'Запази'}
+          </button>
+          <button
+            type="button"
+            className="reset-btn"
+            onClick={handleReset}
+            disabled={isDefault}
+            aria-label="Върни стойностите по подразбиране"
+          >
+            Нулирай
+          </button>
+          <span className="save-hint" role="status" aria-live="polite">
+            {saved ? 'Линкът е копиран — отвори го от всеки браузър' : ''}
+          </span>
         </div>
 
         <section className="panel projection" aria-label="Прогноза по години">
@@ -196,98 +317,6 @@ export default function App() {
           </div>
         </section>
 
-        <div className="controls">
-          <div className="control--full">
-            <div className="control-head">
-              <label className="control-name" htmlFor="years">
-                Години
-              </label>
-              <span className="control-value num">{years} г.</span>
-            </div>
-            <input
-              id="years"
-              type="range"
-              min={BOUNDS.years.min}
-              max={BOUNDS.years.max}
-              step={BOUNDS.years.step}
-              value={years}
-              onChange={(event) => setYears(Number(event.target.value))}
-            />
-            <div className="scale">
-              <span>{BOUNDS.years.min}</span>
-              <span>{BOUNDS.years.max}</span>
-            </div>
-          </div>
-
-          <div className="control--full">
-            <div className="control-head">
-              <label className="control-name" htmlFor="rate">
-                Годишна доходност
-              </label>
-              <span className="control-value num">{rate}%</span>
-            </div>
-            <input
-              id="rate"
-              type="range"
-              min={BOUNDS.rate.min}
-              max={BOUNDS.rate.max}
-              step={BOUNDS.rate.step}
-              value={rate}
-              onChange={(event) => setRate(Number(event.target.value))}
-            />
-            <div className="scale">
-              <span>{BOUNDS.rate.min}%</span>
-              <span className="scale-mid">S&amp;P ср. ~10.5%</span>
-              <span>{BOUNDS.rate.max}%</span>
-            </div>
-          </div>
-
-          <div>
-            <label className="field-label" htmlFor="monthly">
-              Месечно (€)
-            </label>
-            <input
-              id="monthly"
-              className="amount num"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              value={monthlyText}
-              onChange={(event) => setMonthlyText(event.target.value)}
-              onBlur={() => setMonthlyText(String(monthly))}
-            />
-          </div>
-
-          <div>
-            <label className="field-label" htmlFor="initial">
-              Начална сума (€)
-            </label>
-            <input
-              id="initial"
-              className="amount num"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              value={initialText}
-              onChange={(event) => setInitialText(event.target.value)}
-              onBlur={() => setInitialText(String(initial))}
-            />
-          </div>
-        </div>
-
-        <div className="save-row">
-          <button
-            type="button"
-            className={`save-btn${saved ? ' saved' : ''}`}
-            onClick={handleSave}
-          >
-            {saved ? '✓ Запазено' : 'Запази'}
-          </button>
-          <span className="save-hint" role="status" aria-live="polite">
-            {saved ? 'Линкът е копиран — отвори го от всеки браузър' : ''}
-          </span>
-        </div>
-
         <section className="panel income" aria-label="Средна месечна печалба">
           <div className="income-head">
             <div>
@@ -312,6 +341,7 @@ export default function App() {
               min={0}
               max={years}
               value={profitYear}
+              aria-valuetext={`година ${profitYear} от ${years}`}
               onChange={(event) => setProfitYear(Number(event.target.value))}
             />
             <div className="scale">
