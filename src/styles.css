@@ -785,6 +785,47 @@ input[type='text'].amount:focus {
 }
 
 /* ---------------------------------------------------------------------------
+   Share
+   --------------------------------------------------------------------------- */
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  margin-top: 0.875rem;
+}
+
+.share-btn {
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid var(--track);
+  border-radius: var(--radius-input);
+  color: var(--muted);
+  padding: 0.625rem 1.125rem;
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-height: 2.5rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.share-btn:hover:not(:disabled) {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.share-btn:disabled {
+  color: var(--faint);
+  border-color: var(--border-2);
+  cursor: default;
+}
+
+.share-error {
+  color: var(--down);
+  font-size: 0.6875rem;
+}
+
+/* ---------------------------------------------------------------------------
    Monthly-income panel
    --------------------------------------------------------------------------- */
 .income {
@@ -812,6 +853,28 @@ input[type='text'].amount:focus {
   color: var(--label);
   font-size: 0.6875rem;
   padding-bottom: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Goal seek
+   --------------------------------------------------------------------------- */
+.goal {
+  margin-top: 2rem;
+  padding: 1.25rem clamp(1rem, 0.75rem + 1vw, 1.5rem);
+}
+
+.goal-heading {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.goal-result {
+  margin: 1rem 0 0;
+  color: var(--text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
 /* ---------------------------------------------------------------------------

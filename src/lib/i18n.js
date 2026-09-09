@@ -91,6 +91,26 @@ const STRINGS = {
     relativeDaysOne: 'преди {n} ден',
     relativeDaysMany: 'преди {n} дни',
     axisThousand: 'к',
+
+    controlGrowth: 'Годишен ръст на вноската',
+    controlGrowthHint: '0% = постоянна вноска',
+    controlGrowthAriaValue: '{n} процента на година',
+
+    goalAriaLabel: 'Кога ще стигна тази сума?',
+    goalHeading: 'Кога ще стигна тази сума?',
+    goalFieldLabel: 'Целева сума (€)',
+    goalAlready: 'Вече имаш повече от {amount}',
+    goalReached: 'ще стигнеш {amount}',
+    goalDuration: '{years} г. {months} мес.',
+    goalDurationYearsOnly: '{years} г.',
+    goalUnreachable:
+      'Няма да стигнеш {amount} в рамките на 100 години при тези настройки — ' +
+      'увеличи вноската, началната сума или доходността.',
+
+    shareButton: 'Сподели резултат',
+    shareCardCaption: 'Изчислено с калкулатор за индексен фонд S&P 500',
+    shareCardHorizon: '{years} г. · {rate}% годишно',
+    shareFailed: 'Споделянето не бе успешно — картинката е изтеглена вместо това.',
   },
   en: {
     eyebrow: 'Index fund calculator',
@@ -166,6 +186,26 @@ const STRINGS = {
     relativeDaysOne: '{n} day ago',
     relativeDaysMany: '{n} days ago',
     axisThousand: 'k',
+
+    controlGrowth: 'Annual contribution growth',
+    controlGrowthHint: '0% = flat contribution',
+    controlGrowthAriaValue: '{n} percent per year',
+
+    goalAriaLabel: 'When will I reach this amount?',
+    goalHeading: 'When will I reach this amount?',
+    goalFieldLabel: 'Target amount (€)',
+    goalAlready: 'You already have more than {amount}',
+    goalReached: "you'll reach {amount}",
+    goalDuration: '{years} yr {months} mo',
+    goalDurationYearsOnly: '{years} yr',
+    goalUnreachable:
+      "You won't reach {amount} within 100 years at these settings — " +
+      'increase the contribution, initial amount, or return.',
+
+    shareButton: 'Share result',
+    shareCardCaption: 'Calculated with the S&P 500 index fund calculator',
+    shareCardHorizon: '{years} yr · {rate}% annually',
+    shareFailed: 'Sharing did not work — the image was downloaded instead.',
   },
 }
 
