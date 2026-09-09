@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n'
 import { BOUNDS, parseAmount } from '../lib/settings'
 
 /**
@@ -8,7 +9,7 @@ import { BOUNDS, parseAmount } from '../lib/settings'
  * buttons make the common adjustment a single tap, while the field still takes
  * arbitrary values for anything the steps do not reach.
  */
-export default function AmountField({ id, label, value, text, step, onChange, onCommit }) {
+export default function AmountField({ id, label, value, text, step, locale, onChange, onCommit }) {
   const bounds = BOUNDS[id]
 
   const nudge = (delta) => {
@@ -31,7 +32,7 @@ export default function AmountField({ id, label, value, text, step, onChange, on
           className="stepper-btn"
           onClick={() => nudge(-1)}
           disabled={value <= bounds.min}
-          aria-label={`${label}: намали с ${step}`}
+          aria-label={t(locale, 'amountDecreaseAriaLabel', { label, step })}
         >
           −
         </button>
@@ -50,7 +51,7 @@ export default function AmountField({ id, label, value, text, step, onChange, on
           className="stepper-btn"
           onClick={() => nudge(1)}
           disabled={value >= bounds.max}
-          aria-label={`${label}: увеличи с ${step}`}
+          aria-label={t(locale, 'amountIncreaseAriaLabel', { label, step })}
         >
           +
         </button>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Privacy Policy — S&P 500 Calculator</title>
+    <style>
+      :root { color-scheme: dark light; }
+      body {
+        margin: 0; padding: 2rem 1.25rem 4rem; max-width: 42rem; margin-inline: auto;
+        background: #080808; color: #f0f0f0;
+        font: 15px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+      .updated { color: #888; font-size: 0.8125rem; margin-bottom: 0.5rem; }
+      .lang { color: #888; font-size: 0.8125rem; margin-bottom: 2rem; }
+      h2 { font-size: 1.0625rem; margin-top: 2rem; }
+      p, li { color: #d0d0d0; }
+      a { color: #e8ff5a; }
+      code { background: #1a1a1a; padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.9em; }
+    </style>
+  </head>
+  <body>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Effective September 9, 2026.</p>
+    <p class="lang"><a href="/privacy.html">Български</a></p>
+
+    <p>
+      S&amp;P 500 Calculator is a compound-interest calculator for recurring
+      index-fund investments, with a live price for SXR8 (iShares Core S&amp;P
+      500 UCITS ETF). The app has no account, sign-up, or login.
+    </p>
+
+    <h2>What we don't collect</h2>
+    <ul>
+      <li>No name, email, phone number, or other personal information is requested or stored.</li>
+      <li>No accounts, no sign-in, no cloud sync across devices.</li>
+      <li>No advertising, behavioural analytics, or third-party tracking SDKs.</li>
+      <li>No cross-site tracking cookies.</li>
+    </ul>
+
+    <h2>What is kept — and where</h2>
+    <p>
+      The values you enter (years, monthly contribution, initial amount,
+      expected return), your chosen theme (dark/light), your chosen language,
+      and the last successfully loaded SXR8 price are kept only
+      <strong>locally on your device</strong> (the browser's or the app's
+      built-in WebView's <code>localStorage</code>). None of this is ever sent
+      to us or to any third party — it simply lets the app remember your
+      settings the next time you open it, including offline.
+    </p>
+    <p>
+      Deleting the app (or clearing site data in your browser's settings)
+      removes this information entirely.
+    </p>
+
+    <h2>Network requests</h2>
+    <p>
+      To show the live SXR8 price, the app calls our own server (a small
+      proxy function), which in turn fetches public market data from Yahoo
+      Finance. That request carries only the time range you selected (e.g.
+      "last year") — no device, account, or personal identifier is sent. If
+      there is no connection, the calculator keeps working from the last
+      price saved locally.
+    </p>
+
+    <h2>Children</h2>
+    <p>
+      The app is not directed at children and does not knowingly collect data
+      from anyone under 13 — for the reason above: it does not collect
+      personal data from anyone at all.
+    </p>
+
+    <h2>Changes to this policy</h2>
+    <p>
+      If how the app handles data ever changes, this page will be updated and
+      the date above will change.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Privacy questions: <!-- TODO: replace with a real support email before App Store submission -->
+      <a href="mailto:REPLACE_WITH_SUPPORT_EMAIL">REPLACE_WITH_SUPPORT_EMAIL</a>.
+    </p>
+
+    <p><a href="/">&larr; Back to the calculator</a></p>
+  </body>
+</html>

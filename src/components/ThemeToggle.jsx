@@ -1,3 +1,5 @@
+import { t } from '../lib/i18n'
+
 /**
  * Sun and moon as inline paths rather than an icon font or emoji: the page
  * already avoids depending on a font resolving, and an emoji would render in a
@@ -22,7 +24,7 @@ const Moon = () => (
   </svg>
 )
 
-export default function ThemeToggle({ theme, onToggle }) {
+export default function ThemeToggle({ theme, onToggle, locale }) {
   const goingLight = theme === 'dark'
   return (
     <button
@@ -31,8 +33,8 @@ export default function ThemeToggle({ theme, onToggle }) {
       onClick={onToggle}
       // The button switches rather than reporting state, so the name says what
       // pressing it does. aria-pressed would be ambiguous here.
-      aria-label={goingLight ? 'Включи светла тема' : 'Включи тъмна тема'}
-      title={goingLight ? 'Светла тема' : 'Тъмна тема'}
+      aria-label={t(locale, goingLight ? 'themeToLight' : 'themeToDark')}
+      title={t(locale, goingLight ? 'themeLightTitle' : 'themeDarkTitle')}
     >
       {goingLight ? <Sun /> : <Moon />}
     </button>
