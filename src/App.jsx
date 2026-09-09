@@ -9,12 +9,13 @@ import {
 } from 'recharts'
 import AmountField from './components/AmountField'
 import LocaleToggle from './components/LocaleToggle'
+import ShareButton from './components/ShareButton'
 import Sxr8Chart from './components/Sxr8Chart'
 import ThemeToggle from './components/ThemeToggle'
 import { useLocale } from './hooks/useLocale'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { useTheme } from './hooks/useTheme'
-import { averageMonthlyGain, buildProjection } from './lib/compound'
+import { averageMonthlyGain, buildProjection, yearsToReach } from './lib/compound'
 import { formatAxisMoney, formatCompactEur } from './lib/format'
 import { t } from './lib/i18n'
 import {
@@ -45,9 +46,11 @@ export default function App() {
 
   const [years, setYears] = useState(initialSettings.years)
   const [rate, setRate] = useState(initialSettings.rate)
+  const [growth, setGrowth] = useState(initialSettings.growth)
   // Amount fields keep their raw text so they can be cleared mid-edit.
   const [monthlyText, setMonthlyText] = useState(String(initialSettings.monthly))
   const [initialText, setInitialText] = useState(String(initialSettings.initial))
+  const [targetText, setTargetText] = useState(String(initialSettings.target))
   const [profitYear, setProfitYear] = useState(initialSettings.years)
   const [saved, setSaved] = useState(false)
 
@@ -60,10 +63,11 @@ export default function App() {
 
   const monthly = parseAmount(monthlyText, 'monthly')
   const initial = parseAmount(initialText, 'initial')
+  const target = parseAmount(targetText, 'target')
 
   const settings = useMemo(
-    () => ({ years, monthly, initial, rate }),
-    [years, monthly, initial, rate],
+    () => ({ years, monthly, initial, rate, growth, target }),
+    [years, monthly, initial, rate, growth, target],
   )
 
   useEffect(() => {
@@ -78,8 +82,8 @@ export default function App() {
   }, [years])
 
   const rows = useMemo(
-    () => buildProjection({ years, monthly, initial, rate }),
-    [years, monthly, initial, rate],
+    () => buildProjection({ years, monthly, initial, rate, monthlyGrowthPct: growth }),
+    [years, monthly, initial, rate, growth],
   )
 
   const last = rows[rows.length - 1]
@@ -90,11 +94,39 @@ export default function App() {
     : 0
   const monthlyGain = averageMonthlyGain(rows, profitYear)
 
+  // The reverse question, answered against the same inputs as the forward
+  // projection above so "when do I reach X" and "what do I have after N
+  // years" never disagree with each other.
+  const goalMonths = useMemo(
+    () => yearsToReach({ target, monthly, initial, rate, monthlyGrowthPct: growth }),
+    [target, monthly, initial, rate, growth],
+  )
+
+  const goalText = useMemo(() => {
+    const amount = formatCompactEur(target, locale)
+    if (initial >= target) return t(locale, 'goalAlready', { amount })
+    if (goalMonths == null) return t(locale, 'goalUnreachable', { amount })
+
+    let wholeYears = Math.floor(goalMonths)
+    let extraMonths = Math.round((goalMonths - wholeYears) * 12)
+    // Rounding a fraction like 6.999 years can carry into a 13th month.
+    if (extraMonths === 12) {
+      wholeYears += 1
+      extraMonths = 0
+    }
+    const duration = extraMonths === 0
+      ? t(locale, 'goalDurationYearsOnly', { years: wholeYears })
+      : t(locale, 'goalDuration', { years: wholeYears, months: extraMonths })
+    return `${duration} · ${t(locale, 'goalReached', { amount })}`
+  }, [target, initial, goalMonths, locale])
+
   const isDefault =
     years === DEFAULTS.years &&
     rate === DEFAULTS.rate &&
     monthly === DEFAULTS.monthly &&
-    initial === DEFAULTS.initial
+    initial === DEFAULTS.initial &&
+    growth === DEFAULTS.growth &&
+    target === DEFAULTS.target
 
   const handleSave = useCallback(async () => {
     const params = new URLSearchParams({
@@ -102,9 +134,11 @@ export default function App() {
       m: String(monthly),
       i: String(initial),
       r: String(rate),
+      g: String(growth),
+      t: String(target),
     })
     window.history.replaceState({}, '', `?${params}`)
-    saveSettings({ years, monthly, initial, rate })
+    saveSettings({ years, monthly, initial, rate, growth, target })
     try {
       await navigator.clipboard.writeText(window.location.href)
     } catch {
@@ -113,13 +147,15 @@ export default function App() {
     }
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
-  }, [years, monthly, initial, rate])
+  }, [years, monthly, initial, rate, growth, target])
 
   const handleReset = useCallback(() => {
     setYears(DEFAULTS.years)
     setRate(DEFAULTS.rate)
+    setGrowth(DEFAULTS.growth)
     setMonthlyText(String(DEFAULTS.monthly))
     setInitialText(String(DEFAULTS.initial))
+    setTargetText(String(DEFAULTS.target))
     setProfitYear(DEFAULTS.years)
     // Clear the query string too, otherwise a reload would restore the values
     // that were just discarded.
@@ -173,6 +209,12 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        <ShareButton
+          locale={locale}
+          palette={palette}
+          cardData={{ finalValue, totalInvested, gains: last.gains, gainPct, years, rate }}
+        />
 
         <div className="controls">
           <div className="control--full">
@@ -245,6 +287,30 @@ export default function App() {
             onChange={setInitialText}
             onCommit={() => setInitialText(String(initial))}
           />
+
+          <div className="control--full">
+            <div className="control-head">
+              <label className="control-name" htmlFor="growth">
+                {t(locale, 'controlGrowth')}
+              </label>
+              <span className="control-value num">{growth}%</span>
+            </div>
+            <input
+              id="growth"
+              type="range"
+              min={BOUNDS.growth.min}
+              max={BOUNDS.growth.max}
+              step={BOUNDS.growth.step}
+              value={growth}
+              aria-valuetext={t(locale, 'controlGrowthAriaValue', { n: growth })}
+              onChange={(event) => setGrowth(Number(event.target.value))}
+            />
+            <div className="scale">
+              <span>{BOUNDS.growth.min}%</span>
+              <span className="scale-mid">{t(locale, 'controlGrowthHint')}</span>
+              <span>{BOUNDS.growth.max}%</span>
+            </div>
+          </div>
         </div>
 
         <div className="save-row">
@@ -373,6 +439,23 @@ export default function App() {
               <span>{years}</span>
             </div>
           </div>
+        </section>
+
+        <section className="panel goal" aria-label={t(locale, 'goalAriaLabel')}>
+          <div className="goal-heading">{t(locale, 'goalHeading')}</div>
+
+          <AmountField
+            id="target"
+            label={t(locale, 'goalFieldLabel')}
+            value={target}
+            text={targetText}
+            step={5000}
+            locale={locale}
+            onChange={setTargetText}
+            onCommit={() => setTargetText(String(target))}
+          />
+
+          <p className="goal-result num">{goalText}</p>
         </section>
 
         <p className="disclaimer">{t(locale, 'disclaimer')}</p>

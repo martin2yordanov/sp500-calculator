@@ -2,12 +2,15 @@
  * Monthly-compounded projection with a contribution at the end of each month.
  * One row per completed year, plus year 0 for the opening balance.
  *
- * The arithmetic here is deliberately unchanged from the original app — only
- * its packaging moved — so previously saved links keep producing the same
- * numbers they always did.
+ * The core arithmetic is deliberately unchanged from the original app.
+ * `monthlyGrowthPct` is new and defaults to 0, at which it is a no-op:
+ * `monthly * (1 + 0)^n === monthly` for every n, so a horizon with no
+ * contribution growth produces byte-identical rows to before — verified in
+ * scratch/test-compound.mjs, not just argued from the formula.
  */
-export function buildProjection({ years, monthly, initial, rate }) {
+export function buildProjection({ years, monthly, initial, rate, monthlyGrowthPct = 0 }) {
   const monthlyRate = rate / 100 / 12
+  const growth = monthlyGrowthPct / 100
   let total = initial
   let invested = initial
 
@@ -17,8 +20,13 @@ export function buildProjection({ years, monthly, initial, rate }) {
 
   const months = Math.round(years * 12)
   for (let month = 1; month <= months; month++) {
-    total = total * (1 + monthlyRate) + monthly
-    invested = initial + monthly * month
+    // A raise lands at the start of each new year, not continuously —
+    // matches how an actual salary-linked contribution increase works, and
+    // keeps the first 12 months identical to the plain `monthly` case.
+    const yearIndex = Math.floor((month - 1) / 12)
+    const contribution = monthly * (1 + growth) ** yearIndex
+    total = total * (1 + monthlyRate) + contribution
+    invested += contribution
     if (month % 12 === 0) {
       rows.push({
         year: month / 12,
@@ -40,4 +48,33 @@ export function buildProjection({ years, monthly, initial, rate }) {
 export function averageMonthlyGain(rows, year) {
   if (year <= 0 || year >= rows.length) return 0
   return Math.round((rows[year].gains - rows[year - 1].gains) / 12)
+}
+
+/**
+ * The reverse question: not "what do I have after N years" but "how long
+ * until I have X". Walks the same month-by-month compounding used above
+ * (not a closed-form inverse) so it stays correct even with contribution
+ * growth, which has no simple algebraic inverse.
+ *
+ * Returns a fractional year (e.g. 7.25 for "7 years, 3 months") the month
+ * the running total first reaches `target`, or null if it does not happen
+ * within `maxYears` — a flat or shrinking balance (zero contribution, zero
+ * or negative real return) can make the target genuinely unreachable, and
+ * that has to be a reportable answer, not an infinite loop.
+ */
+export function yearsToReach({ target, monthly, initial, rate, monthlyGrowthPct = 0 }, maxYears = 100) {
+  if (initial >= target) return 0
+
+  const monthlyRate = rate / 100 / 12
+  const growth = monthlyGrowthPct / 100
+  let total = initial
+  const maxMonths = Math.round(maxYears * 12)
+
+  for (let month = 1; month <= maxMonths; month++) {
+    const yearIndex = Math.floor((month - 1) / 12)
+    const contribution = monthly * (1 + growth) ** yearIndex
+    total = total * (1 + monthlyRate) + contribution
+    if (total >= target) return month / 12
+  }
+  return null
 }

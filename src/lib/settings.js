@@ -5,9 +5,18 @@ export const BOUNDS = {
   rate: { min: 1, max: 20, step: 0.5 },
   monthly: { min: 0, max: 1_000_000 },
   initial: { min: 0, max: 10_000_000 },
+  growth: { min: 0, max: 15, step: 0.5 },
+  target: { min: 0, max: 100_000_000 },
 }
 
-export const DEFAULTS = { years: 20, monthly: 200, initial: 1000, rate: 10.5 }
+export const DEFAULTS = {
+  years: 20,
+  monthly: 200,
+  initial: 1000,
+  rate: 10.5,
+  growth: 0,
+  target: 100_000,
+}
 
 const clamp = (value, { min, max }) => Math.min(max, Math.max(min, value))
 
@@ -58,6 +67,8 @@ export const loadSettings = () => {
     monthly: pick('m', 'monthly'),
     initial: pick('i', 'initial'),
     rate: pick('r', 'rate'),
+    growth: pick('g', 'growth'),
+    target: pick('t', 'target'),
   }
 }
 
