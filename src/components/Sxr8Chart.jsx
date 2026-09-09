@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import PriceAlert from './PriceAlert'
 import { apiUrl } from '../lib/api'
 import {
   formatEur,
@@ -273,6 +274,8 @@ export default function Sxr8Chart({ palette, locale }) {
           </button>
         ))}
       </div>
+
+      <PriceAlert price={end} locale={locale} />
     </section>
   )
 }

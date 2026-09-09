@@ -1,3 +1,4 @@
+import { hapticLight } from '../lib/haptics'
 import { t } from '../lib/i18n'
 import { BOUNDS, parseAmount } from '../lib/settings'
 
@@ -19,6 +20,7 @@ export default function AmountField({ id, label, value, text, step, locale, onCh
       ? Math.floor(value / step) * step + step
       : Math.ceil(value / step) * step - step
     onChange(String(Math.min(bounds.max, Math.max(bounds.min, next))))
+    hapticLight()
   }
 
   return (
