@@ -17,7 +17,17 @@
   --faint: #4a4a4a;
   --label: #555;
 
+  /* The selected segment in the range strip. It was #1f1f1f hardcoded, which in
+     the light theme put near-black text on a near-black pill — the active label
+     vanished. */
+  --tab-active-bg: #1f1f1f;
+  --tab-active-shadow: none;
+
   --accent: #e8ff5a;
+  /* The Save button is lime-on-near-black in both themes — bright lime holds up
+     as a filled background on white, where it fails as text or a thin line. */
+  --accent-solid: #e8ff5a;
+  --accent-solid-text: #080808;
   --up: #5ee3b9;
   --down: #f87171;
   --gain: #4ade80;
@@ -35,6 +45,50 @@
   --gutter: clamp(0.875rem, 0.5rem + 1.5vw, 1.5rem);
 
   color-scheme: dark;
+}
+
+/*
+  Light theme. Applied from an attribute rather than `prefers-color-scheme` so
+  the toggle can override the OS in both directions; index.html sets the
+  attribute before this stylesheet's first paint, and useTheme keeps it current.
+
+  Only the tokens change — no layout rule is duplicated. The one value that is
+  not a straight inversion is the accent: lime at #e8ff5a is invisible on white,
+  so anything drawn as text or a line takes an olive of the same hue, while the
+  bright lime survives as --accent-solid on the Save button.
+*/
+:root[data-theme='light'] {
+  --bg: #faf9f6;
+  --surface: #ffffff;
+  --surface-2: #f4f3ef;
+  --border: #e6e4dd;
+  --border-2: #eceae3;
+  --track: #d6d3c9;
+
+  --text: #1a1a17;
+  --muted: #55534c;
+  /* Chosen by measuring, not by eye. Against --bg these give 6.56:1 (--dim) and
+     5.17:1 (--faint), so the quiet labels, the lede, the disclaimer and the
+     slider endpoints all clear 4.5:1. --faint stays the lighter of the two,
+     since on a light ground lighter is quieter — the inverse of the dark set. */
+  --dim: #5c5a53;
+  --faint: #6b6a60;
+  --label: #5c5a53;
+
+  /* All four are darkened past their first values so the text they colour
+     clears 4.5:1 on white as well as on --bg: 4.77 / 4.86 / 5.86 / 6.37. */
+  /* White on the grey strip, the way a light segmented control usually reads,
+     with a hairline shadow doing the separating instead of a border. */
+  --tab-active-bg: #ffffff;
+  --tab-active-shadow: 0 1px 2px rgba(26, 26, 23, 0.14);
+
+  --accent: #647700;
+  --up: #0b7d5d;
+  --down: #b91c1c;
+  --gain: #15803d;
+  --invested: #1d4ed8;
+
+  color-scheme: light;
 }
 
 /* Fluid root size replaces the old `zoom: 1.3` on the app shell.
@@ -90,8 +144,43 @@ body {
 /* ---------------------------------------------------------------------------
    Masthead
    --------------------------------------------------------------------------- */
-.eyebrow {
+/* The eyebrow and the theme toggle share the top line, which is what puts the
+   button at the top right without taking it out of the document flow. */
+.masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 0.25rem;
+}
+
+.theme-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  /* Pulled up and out so the 44px target does not push the heading down or
+     inset the icon from the page gutter. */
+  margin: -0.625rem -0.5rem -0.625rem 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  /* --muted rather than --dim: as an icon this is a UI component, and --dim
+     against the dark background is 2.69:1, under the 3:1 those need. */
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.eyebrow {
   color: var(--dim);
   font-size: 0.6875rem;
   letter-spacing: 0.1875em;
@@ -262,7 +351,8 @@ body {
 }
 
 .range-tab[aria-pressed='true'] {
-  background: #1f1f1f;
+  background: var(--tab-active-bg);
+  box-shadow: var(--tab-active-shadow);
   color: var(--text);
 }
 
@@ -274,7 +364,12 @@ body {
 @media (pointer: coarse) {
   .range-tab {
     min-height: 2.75rem;
-    padding-inline: 0.9375rem;
+    /* Only the height serves the thumb. Widening the padding as well (it was
+       0.9375rem) pushed all seven tabs past the strip on every common phone —
+       29px over at 390, 44px at 375 — so "Max" sat clipped behind a scroll
+       nobody could see a reason for. At 0.6875rem they fit exactly from 375px
+       up, and 320px still scrolls, which is the documented fallback. */
+    padding-inline: 0.6875rem;
   }
 }
 
@@ -589,8 +684,8 @@ input[type='text'].amount:focus {
 }
 
 .save-btn {
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--accent-solid);
+  color: var(--accent-solid-text);
   border: none;
   border-radius: var(--radius-input);
   padding: 0.75rem 1.5rem;

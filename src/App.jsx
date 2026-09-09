@@ -9,7 +9,9 @@ import {
 } from 'recharts'
 import AmountField from './components/AmountField'
 import Sxr8Chart from './components/Sxr8Chart'
+import ThemeToggle from './components/ThemeToggle'
 import { useMediaQuery } from './hooks/useMediaQuery'
+import { useTheme } from './hooks/useTheme'
 import { averageMonthlyGain, buildProjection } from './lib/compound'
 import { formatAxisMoney, formatCompactEur } from './lib/format'
 import {
@@ -19,9 +21,7 @@ import {
   parseAmount,
   saveSettings,
 } from './lib/settings'
-
-const ACCENT = '#e8ff5a'
-const INVESTED = '#3b82f6'
+import { CHART } from './lib/theme'
 
 function ProjectionTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -49,6 +49,10 @@ export default function App() {
   const [saved, setSaved] = useState(false)
 
   const isNarrow = useMediaQuery('(max-width: 30em)')
+  const { theme, toggle } = useTheme()
+  // Recharts writes these as SVG attributes, where `var(--token)` would not
+  // resolve, so the chart colours come from JS rather than the stylesheet.
+  const palette = CHART[theme]
 
   const monthly = parseAmount(monthlyText, 'monthly')
   const initial = parseAmount(initialText, 'initial')
@@ -122,7 +126,10 @@ export default function App() {
     <div className="shell">
       <div className="container">
         <header>
-          <div className="eyebrow">Калкулатор за индексен фонд</div>
+          <div className="masthead">
+            <div className="eyebrow">Калкулатор за индексен фонд</div>
+            <ThemeToggle theme={theme} onToggle={toggle} />
+          </div>
           <h1 className="title">
             S&amp;P 500 <span className="title-accent">Лихва върху лихва</span>
           </h1>
@@ -131,7 +138,7 @@ export default function App() {
           </p>
         </header>
 
-        <Sxr8Chart />
+        <Sxr8Chart palette={palette} />
 
         {/*
           Result first, then the controls that drive it. The projection chart
@@ -258,11 +265,11 @@ export default function App() {
               which is a poor deal on a touch screen. */}
           <div className="legend">
             <span className="legend-item">
-              <span className="legend-swatch" style={{ background: ACCENT }} />
+              <span className="legend-swatch" style={{ background: palette.accent }} />
               Портфолио
             </span>
             <span className="legend-item">
-              <span className="legend-swatch" style={{ background: INVESTED }} />
+              <span className="legend-swatch" style={{ background: palette.invested }} />
               Вложено
             </span>
           </div>
@@ -271,24 +278,28 @@ export default function App() {
               <AreaChart data={rows} margin={{ top: 5, right: 12, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="totalGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={ACCENT} stopOpacity={0.15} />
-                    <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
+                    <stop offset="5%" stopColor={palette.accent} stopOpacity={palette.fillOpacity} />
+                    <stop offset="95%" stopColor={palette.accent} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="investedGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={INVESTED} stopOpacity={0.1} />
-                    <stop offset="95%" stopColor={INVESTED} stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor={palette.invested}
+                      stopOpacity={palette.investedFillOpacity}
+                    />
+                    <stop offset="95%" stopColor={palette.invested} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="year"
-                  tick={{ fill: '#666', fontSize: 10, fontFamily: 'Times New Roman' }}
+                  tick={{ fill: palette.axisTick, fontSize: 10, fontFamily: 'Times New Roman' }}
                   tickLine={false}
                   axisLine={false}
                   minTickGap={isNarrow ? 18 : 8}
                 />
                 <YAxis
                   tickFormatter={formatAxisMoney}
-                  tick={{ fill: '#666', fontSize: 10, fontFamily: 'Times New Roman' }}
+                  tick={{ fill: palette.axisTick, fontSize: 10, fontFamily: 'Times New Roman' }}
                   tickLine={false}
                   axisLine={false}
                   width={isNarrow ? 38 : 52}
@@ -298,7 +309,7 @@ export default function App() {
                   type="monotone"
                   dataKey="invested"
                   name="Вложено"
-                  stroke={INVESTED}
+                  stroke={palette.invested}
                   strokeWidth={1.5}
                   fill="url(#investedGrad)"
                   dot={false}
@@ -307,7 +318,7 @@ export default function App() {
                   type="monotone"
                   dataKey="total"
                   name="Портфолио"
-                  stroke={ACCENT}
+                  stroke={palette.accent}
                   strokeWidth={2}
                   fill="url(#totalGrad)"
                   dot={false}
