@@ -1,0 +1,14 @@
+{
+  "appId": "bg.fathers.sp500calculator",
+  "appName": "S&P 500 Калкулатор",
+  "webDir": "dist",
+  "backgroundColor": "#080808",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#080808",
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "backgroundColor": "#080808"
+  }
+}

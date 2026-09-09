@@ -366,6 +366,18 @@ export default function App() {
           Миналите резултати не гарантират бъдещи. Историческа номинална доходност
           на S&amp;P 500 ~10.5%/год. Реална (след инфлация) ~7%.
         </p>
+
+        {/*
+          Plain in-bundle navigation, not target="_blank": both pages are
+          static files copied into the same dist/ build (see public/), so on
+          the native app they are already local and work offline — opening
+          them in an external browser would be a regression, not a nicety.
+        */}
+        <p className="footer-links">
+          <a href="/privacy.html">Поверителност</a>
+          <span aria-hidden="true"> · </span>
+          <a href="/support.html">Поддръжка</a>
+        </p>
       </div>
     </div>
   )
