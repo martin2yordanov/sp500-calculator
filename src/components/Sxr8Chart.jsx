@@ -9,12 +9,15 @@ import {
   YAxis,
 } from 'recharts'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { apiUrl } from '../lib/api'
 import {
   formatEur,
   formatPct,
   formatQuoteTimestamp,
+  formatRelativeTime,
   formatSignedEur,
 } from '../lib/format'
+import { readCachedPrice, writeCachedPrice } from '../lib/priceCache'
 
 export const RANGES = [
   { key: '1d', label: '1D', long: 'Последен ден' },
@@ -39,6 +42,9 @@ export default function Sxr8Chart({ palette }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  // Set only when the current data came from the offline cache rather than a
+  // live fetch, so the UI can say so instead of presenting stale data as fresh.
+  const [staleSince, setStaleSince] = useState(null)
   const [attempt, setAttempt] = useState(0)
 
   // Ranges already fetched are kept so flipping between tabs is instant and
@@ -61,19 +67,28 @@ export default function Sxr8Chart({ palette }) {
     setLoading(true)
     setError(null)
 
-    fetch(`/api/sxr8?range=${range}`, { signal: controller.signal })
+    fetch(apiUrl(`/api/sxr8?range=${range}`), { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         return response.json()
       })
       .then((payload) => {
         cache.current.set(range, payload)
+        writeCachedPrice(range, payload)
+        setStaleSince(null)
         setData(payload)
         setLoading(false)
       })
       .catch((cause) => {
         if (cause.name === 'AbortError') return
-        setError(String(cause.message || cause))
+        const cached = readCachedPrice(range)
+        if (cached) {
+          cache.current.set(range, cached.payload)
+          setStaleSince(cached.savedAt)
+          setData(cached.payload)
+        } else {
+          setError(String(cause.message || cause))
+        }
         setLoading(false)
       })
 
@@ -82,6 +97,7 @@ export default function Sxr8Chart({ palette }) {
 
   const retry = useCallback(() => {
     cache.current.delete(range)
+    setStaleSince(null)
     setAttempt((n) => n + 1)
   }, [range])
 
@@ -131,6 +147,18 @@ export default function Sxr8Chart({ palette }) {
             {formatSignedEur(change)} {isUp ? '▲' : '▼'} {formatPct(changePct)}
           </span>
           <span className="quote-delta-range">· {activeRange.long}</span>
+        </div>
+      )}
+
+      {/*
+        Shown when the fetch failed and a cached price filled in instead — see
+        readCachedPrice in Sxr8Chart's effect. Without this the visitor has no
+        way to tell a live price from Tuesday's, which matters for a figure
+        people might act on.
+      */}
+      {staleSince != null && (
+        <div className="quote-stale" role="status">
+          Няма връзка · последна известна цена {formatRelativeTime(staleSince)}
         </div>
       )}
 

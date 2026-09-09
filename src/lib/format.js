@@ -44,6 +44,22 @@ export const formatAxisMoney = (value) => {
   return String(Math.round(value))
 }
 
+/**
+ * "преди 3 мин" / "преди 2 ч" / "преди 5 дни" — for the offline stale-price
+ * banner. Coarse on purpose: the point is "is this safe to trust", not a
+ * precise duration.
+ */
+export const formatRelativeTime = (timestamp) => {
+  const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000))
+  if (seconds < 60) return 'току-що'
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) return `преди ${minutes} мин`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `преди ${hours} ч`
+  const days = Math.round(hours / 24)
+  return `преди ${days} ${days === 1 ? 'ден' : 'дни'}`
+}
+
 /** Intraday ranges get a time, longer ones get a date. */
 export const formatQuoteTimestamp = (timestamp, range) => {
   const date = new Date(timestamp)

@@ -30,6 +30,9 @@
   --accent-solid-text: #080808;
   --up: #5ee3b9;
   --down: #f87171;
+  /* Amber, not --down: a stale price is missing information, not a loss, and
+     red here would read as a crash. 6.48:1 on --surface (#0d0d0d). */
+  --stale: #c48a1f;
   --gain: #4ade80;
   --invested: #3b82f6;
 
@@ -85,6 +88,9 @@
   --accent: #647700;
   --up: #0b7d5d;
   --down: #b91c1c;
+  /* Darkened from the dark theme's #c48a1f to clear 4.5:1 on white (4.92:1);
+     that value only manages 3:1 here. */
+  --stale: #8f6a2e;
   --gain: #15803d;
   --invested: #1d4ed8;
 
@@ -261,6 +267,12 @@ body {
 
 .quote-delta-range {
   color: var(--label);
+}
+
+.quote-stale {
+  margin-top: 0.375rem;
+  color: var(--stale);
+  font-size: 0.6875rem;
 }
 
 .quote-chart {
@@ -793,6 +805,19 @@ input[type='text'].amount:focus {
   color: var(--dim);
   font-size: 0.6875rem;
   line-height: 1.6;
+}
+
+.footer-links {
+  margin-top: 0.75rem;
+  font-size: 0.6875rem;
+}
+
+.footer-links a {
+  color: var(--muted);
+}
+
+.footer-links a:hover {
+  color: var(--text);
 }
 
 /* ---------------------------------------------------------------------------
