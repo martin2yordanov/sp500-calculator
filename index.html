@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <!-- viewport-fit=cover so the safe-area insets in styles.css actually receive values on notched iPhones -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#080808" />
     <meta name="description" content="Калкулатор за лихва върху лихва при инвестиция в индексен фонд върху S&P 500, с живи цени на SXR8." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -26,6 +26,36 @@
     <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
 
     <link rel="manifest" href="/manifest.webmanifest" />
+
+    <script>
+      /*
+        Resolve the theme before first paint. Without this the stylesheet's
+        default (dark) paints first and a light-preferring visitor sees a flash
+        before React mounts and sets the attribute.
+
+        Deliberately duplicates initialTheme() from src/lib/theme.js — it has to
+        run inline, ahead of the bundle. Keep the storage key and the two
+        theme-colour values in step with that module.
+      */
+      (function () {
+        try {
+          var stored = localStorage.getItem('sp500-theme')
+          var theme =
+            stored === 'dark' || stored === 'light'
+              ? stored
+              : window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark'
+          document.documentElement.dataset.theme = theme
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) {
+            meta.setAttribute('content', theme === 'light' ? '#faf9f6' : '#080808')
+          }
+        } catch (e) {
+          /* Storage or matchMedia unavailable: the stylesheet default stands. */
+        }
+      })()
+    </script>
 
     <!-- Fonts move here from a runtime-injected @import: that pattern blocks render and
          re-parses on every mount. preconnect + a single stylesheet is measurably faster. -->
