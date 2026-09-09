@@ -160,27 +160,46 @@ body {
   margin-bottom: 0.25rem;
 }
 
-.theme-toggle {
+.masthead-toggles {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.theme-toggle,
+.locale-toggle {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
+  min-width: 2.75rem;
   height: 2.75rem;
-  /* Pulled up and out so the 44px target does not push the heading down or
-     inset the icon from the page gutter. */
-  margin: -0.625rem -0.5rem -0.625rem 0;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 999px;
-  /* --muted rather than --dim: as an icon this is a UI component, and --dim
-     against the dark background is 2.69:1, under the 3:1 those need. */
+  /* --muted rather than --dim: these are UI components (icon + text pill),
+     and --dim against the dark background is 2.69:1, under the 3:1 those
+     need as non-text/UI elements. */
   color: var(--muted);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.theme-toggle:hover {
+/* Pulled up and out so the 44px targets do not push the heading down or
+   inset from the page gutter. Only the outer edges of the pair need the
+   pull — .theme-toggle sits last in the row, against the gutter. */
+.masthead-toggles {
+  margin: -0.625rem -0.5rem -0.625rem 0;
+}
+
+.locale-toggle {
+  padding-inline: 0.75rem;
+  font-family: var(--serif);
+  font-size: 0.8125rem;
+}
+
+.theme-toggle:hover,
+.locale-toggle:hover {
   color: var(--text);
   border-color: var(--border);
   background: var(--surface-2);

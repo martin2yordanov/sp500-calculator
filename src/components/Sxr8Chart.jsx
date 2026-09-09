@@ -17,16 +17,21 @@ import {
   formatRelativeTime,
   formatSignedEur,
 } from '../lib/format'
+import { t } from '../lib/i18n'
 import { readCachedPrice, writeCachedPrice } from '../lib/priceCache'
 
+// Labels ("1D", "5Y"...) are ticker-style abbreviations, unchanged across
+// locales. The long form (for the aria-label) comes from the dictionary —
+// this table only says which key holds it, so a typo in a locale string
+// cannot silently point a range at the wrong description.
 export const RANGES = [
-  { key: '1d', label: '1D', long: 'Последен ден' },
-  { key: '5d', label: '1W', long: 'Последна седмица' },
-  { key: '1mo', label: '1M', long: 'Последен месец' },
-  { key: '6mo', label: '6M', long: 'Последни 6 месеца' },
-  { key: '1y', label: '1Y', long: 'Последна година' },
-  { key: '5y', label: '5Y', long: 'Последни 5 години' },
-  { key: 'max', label: 'Max', long: 'От началото' },
+  { key: '1d', label: '1D', longKey: 'range1dLong' },
+  { key: '5d', label: '1W', longKey: 'range5dLong' },
+  { key: '1mo', label: '1M', longKey: 'range1moLong' },
+  { key: '6mo', label: '6M', longKey: 'range6moLong' },
+  { key: '1y', label: '1Y', longKey: 'range1yLong' },
+  { key: '5y', label: '5Y', longKey: 'range5yLong' },
+  { key: 'max', label: 'Max', longKey: 'rangeMaxLong' },
 ]
 
 function ChartNote({ children }) {
@@ -37,7 +42,7 @@ function ChartNote({ children }) {
   )
 }
 
-export default function Sxr8Chart({ palette }) {
+export default function Sxr8Chart({ palette, locale }) {
   const [range, setRange] = useState('5y')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -136,17 +141,17 @@ export default function Sxr8Chart({ palette }) {
   const labelSize = isNarrow ? 10 : 11
 
   return (
-    <section className="quote" aria-label="Цена на SXR8">
+    <section className="quote" aria-label={t(locale, 'quoteAriaLabel')}>
       <div className="card-label">SXR8 · iShares Core S&amp;P 500</div>
 
-      <div className="quote-price num">{formatEur(end)}</div>
+      <div className="quote-price num">{formatEur(end, locale)}</div>
 
       {end != null && (
         <div className="quote-delta">
           <span className="quote-delta-value num" style={{ color: lineColor }}>
-            {formatSignedEur(change)} {isUp ? '▲' : '▼'} {formatPct(changePct)}
+            {formatSignedEur(change, locale)} {isUp ? '▲' : '▼'} {formatPct(changePct, locale)}
           </span>
-          <span className="quote-delta-range">· {activeRange.long}</span>
+          <span className="quote-delta-range">· {t(locale, activeRange.longKey)}</span>
         </div>
       )}
 
@@ -158,19 +163,19 @@ export default function Sxr8Chart({ palette }) {
       */}
       {staleSince != null && (
         <div className="quote-stale" role="status">
-          Няма връзка · последна известна цена {formatRelativeTime(staleSince)}
+          {t(locale, 'quoteStale', { time: formatRelativeTime(staleSince, locale) })}
         </div>
       )}
 
       <div className="quote-chart">
         {loading ? (
-          <ChartNote>Зареждане…</ChartNote>
+          <ChartNote>{t(locale, 'quoteLoading')}</ChartNote>
         ) : error ? (
           <ChartNote>
             <span className="chart-note-stack">
-              Грешка при зареждане на данните
+              {t(locale, 'quoteError')}
               <button type="button" className="retry" onClick={retry}>
-                Опитай отново
+                {t(locale, 'quoteRetry')}
               </button>
             </span>
           </ChartNote>
@@ -207,8 +212,8 @@ export default function Sxr8Chart({ palette }) {
                 }}
                 labelStyle={{ color: palette.tooltipLabel }}
                 itemStyle={{ color: lineColor }}
-                labelFormatter={(value) => formatQuoteTimestamp(value, range)}
-                formatter={(value) => [formatEur(value), 'SXR8']}
+                labelFormatter={(value) => formatQuoteTimestamp(value, range, locale)}
+                formatter={(value) => [formatEur(value, locale), 'SXR8']}
               />
 
               <ReferenceLine
@@ -216,7 +221,7 @@ export default function Sxr8Chart({ palette }) {
                 stroke={palette.minLine}
                 strokeDasharray="2 4"
                 label={{
-                  value: formatEur(min).replace(' €', ''),
+                  value: formatEur(min, locale).replace(' €', ''),
                   position: 'right',
                   fill: palette.minLabel,
                   fontSize: labelSize,
@@ -227,7 +232,7 @@ export default function Sxr8Chart({ palette }) {
                 y={max}
                 stroke="transparent"
                 label={{
-                  value: formatEur(max).replace(' €', ''),
+                  value: formatEur(max, locale).replace(' €', ''),
                   position: 'right',
                   fill: palette.maxLabel,
                   fontSize: labelSize,
@@ -250,18 +255,18 @@ export default function Sxr8Chart({ palette }) {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <ChartNote>Няма налични данни</ChartNote>
+          <ChartNote>{t(locale, 'quoteNoData')}</ChartNote>
         )}
       </div>
 
-      <div className="range-tabs" role="group" aria-label="Времеви обхват">
+      <div className="range-tabs" role="group" aria-label={t(locale, 'quoteRangeGroupAriaLabel')}>
         {RANGES.map((entry) => (
           <button
             key={entry.key}
             type="button"
             className="range-tab"
             aria-pressed={range === entry.key}
-            aria-label={`${entry.label} — ${entry.long}`}
+            aria-label={`${entry.label} — ${t(locale, entry.longKey)}`}
             onClick={() => setRange(entry.key)}
           >
             {entry.label}

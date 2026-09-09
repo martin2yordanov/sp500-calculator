@@ -8,12 +8,15 @@ import {
   YAxis,
 } from 'recharts'
 import AmountField from './components/AmountField'
+import LocaleToggle from './components/LocaleToggle'
 import Sxr8Chart from './components/Sxr8Chart'
 import ThemeToggle from './components/ThemeToggle'
+import { useLocale } from './hooks/useLocale'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { useTheme } from './hooks/useTheme'
 import { averageMonthlyGain, buildProjection } from './lib/compound'
 import { formatAxisMoney, formatCompactEur } from './lib/format'
+import { t } from './lib/i18n'
 import {
   BOUNDS,
   DEFAULTS,
@@ -23,14 +26,14 @@ import {
 } from './lib/settings'
 import { CHART } from './lib/theme'
 
-function ProjectionTooltip({ active, payload, label }) {
+function ProjectionTooltip({ active, payload, label, locale }) {
   if (!active || !payload?.length) return null
   return (
     <div className="tip">
-      <div className="tip-label">Година {label}</div>
+      <div className="tip-label">{t(locale, 'tooltipYear', { n: label })}</div>
       {payload.map((entry) => (
         <div key={entry.name} className="tip-row" style={{ color: entry.color }}>
-          {entry.name}: {formatCompactEur(entry.value)}
+          {entry.name}: {formatCompactEur(entry.value, locale)}
         </div>
       ))}
     </div>
@@ -50,6 +53,7 @@ export default function App() {
 
   const isNarrow = useMediaQuery('(max-width: 30em)')
   const { theme, toggle } = useTheme()
+  const { locale, toggle: toggleLocale } = useLocale()
   // Recharts writes these as SVG attributes, where `var(--token)` would not
   // resolve, so the chart colours come from JS rather than the stylesheet.
   const palette = CHART[theme]
@@ -127,18 +131,19 @@ export default function App() {
       <div className="container">
         <header>
           <div className="masthead">
-            <div className="eyebrow">Калкулатор за индексен фонд</div>
-            <ThemeToggle theme={theme} onToggle={toggle} />
+            <div className="eyebrow">{t(locale, 'eyebrow')}</div>
+            <div className="masthead-toggles">
+              <LocaleToggle locale={locale} onToggle={toggleLocale} />
+              <ThemeToggle theme={theme} onToggle={toggle} locale={locale} />
+            </div>
           </div>
           <h1 className="title">
-            S&amp;P 500 <span className="title-accent">Лихва върху лихва</span>
+            S&amp;P 500 <span className="title-accent">{t(locale, 'titleAccent')}</span>
           </h1>
-          <p className="lede">
-            Историческа средна доходност ~10.5% / година (номинална)
-          </p>
+          <p className="lede">{t(locale, 'lede')}</p>
         </header>
 
-        <Sxr8Chart palette={palette} />
+        <Sxr8Chart palette={palette} locale={locale} />
 
         {/*
           Result first, then the controls that drive it. The projection chart
@@ -148,19 +153,19 @@ export default function App() {
         */}
         <div className="stats">
           <div className="stat">
-            <div className="card-label">Крайна стойност</div>
+            <div className="card-label">{t(locale, 'statFinalValue')}</div>
             <div className="stat-value stat-value--accent num">
-              {formatCompactEur(finalValue)}
+              {formatCompactEur(finalValue, locale)}
             </div>
           </div>
           <div className="stat">
-            <div className="card-label">Общо вложено</div>
-            <div className="stat-value num">{formatCompactEur(totalInvested)}</div>
+            <div className="card-label">{t(locale, 'statTotalInvested')}</div>
+            <div className="stat-value num">{formatCompactEur(totalInvested, locale)}</div>
           </div>
           <div className="stat">
-            <div className="card-label">Печалба</div>
+            <div className="card-label">{t(locale, 'statGains')}</div>
             <div className="stat-value stat-value--gain num">
-              {formatCompactEur(last.gains)}
+              {formatCompactEur(last.gains, locale)}
               <span className="stat-pct">
                 {gainPct >= 0 ? '+' : ''}
                 {gainPct}%
@@ -173,9 +178,11 @@ export default function App() {
           <div className="control--full">
             <div className="control-head">
               <label className="control-name" htmlFor="years">
-                Години
+                {t(locale, 'controlYears')}
               </label>
-              <span className="control-value num">{years} г.</span>
+              <span className="control-value num">
+                {t(locale, 'controlYearsValue', { n: years })}
+              </span>
             </div>
             <input
               id="years"
@@ -184,7 +191,7 @@ export default function App() {
               max={BOUNDS.years.max}
               step={BOUNDS.years.step}
               value={years}
-              aria-valuetext={`${years} години`}
+              aria-valuetext={t(locale, 'controlYearsAriaValue', { n: years })}
               onChange={(event) => setYears(Number(event.target.value))}
             />
             <div className="scale">
@@ -196,7 +203,7 @@ export default function App() {
           <div className="control--full">
             <div className="control-head">
               <label className="control-name" htmlFor="rate">
-                Годишна доходност
+                {t(locale, 'controlRate')}
               </label>
               <span className="control-value num">{rate}%</span>
             </div>
@@ -207,32 +214,34 @@ export default function App() {
               max={BOUNDS.rate.max}
               step={BOUNDS.rate.step}
               value={rate}
-              aria-valuetext={`${rate} процента годишно`}
+              aria-valuetext={t(locale, 'controlRateAriaValue', { n: rate })}
               onChange={(event) => setRate(Number(event.target.value))}
             />
             <div className="scale">
               <span>{BOUNDS.rate.min}%</span>
-              <span className="scale-mid">S&amp;P ср. ~10.5%</span>
+              <span className="scale-mid">{t(locale, 'controlRateHint')}</span>
               <span>{BOUNDS.rate.max}%</span>
             </div>
           </div>
 
           <AmountField
             id="monthly"
-            label="Месечно (€)"
+            label={t(locale, 'fieldMonthly')}
             value={monthly}
             text={monthlyText}
             step={50}
+            locale={locale}
             onChange={setMonthlyText}
             onCommit={() => setMonthlyText(String(monthly))}
           />
 
           <AmountField
             id="initial"
-            label="Начална сума (€)"
+            label={t(locale, 'fieldInitial')}
             value={initial}
             text={initialText}
             step={500}
+            locale={locale}
             onChange={setInitialText}
             onCommit={() => setInitialText(String(initial))}
           />
@@ -244,33 +253,33 @@ export default function App() {
             className={`save-btn${saved ? ' saved' : ''}`}
             onClick={handleSave}
           >
-            {saved ? '✓ Запазено' : 'Запази'}
+            {saved ? t(locale, 'saved') : t(locale, 'save')}
           </button>
           <button
             type="button"
             className="reset-btn"
             onClick={handleReset}
             disabled={isDefault}
-            aria-label="Върни стойностите по подразбиране"
+            aria-label={t(locale, 'resetAriaLabel')}
           >
-            Нулирай
+            {t(locale, 'reset')}
           </button>
           <span className="save-hint" role="status" aria-live="polite">
-            {saved ? 'Линкът е копиран — отвори го от всеки браузър' : ''}
+            {saved ? t(locale, 'saveHint') : ''}
           </span>
         </div>
 
-        <section className="panel projection" aria-label="Прогноза по години">
+        <section className="panel projection" aria-label={t(locale, 'projectionAriaLabel')}>
           {/* The two areas were previously distinguishable only by hovering,
               which is a poor deal on a touch screen. */}
           <div className="legend">
             <span className="legend-item">
               <span className="legend-swatch" style={{ background: palette.accent }} />
-              Портфолио
+              {t(locale, 'legendPortfolio')}
             </span>
             <span className="legend-item">
               <span className="legend-swatch" style={{ background: palette.invested }} />
-              Вложено
+              {t(locale, 'legendInvested')}
             </span>
           </div>
           <div className="projection-chart">
@@ -298,17 +307,17 @@ export default function App() {
                   minTickGap={isNarrow ? 18 : 8}
                 />
                 <YAxis
-                  tickFormatter={formatAxisMoney}
+                  tickFormatter={(value) => formatAxisMoney(value, locale)}
                   tick={{ fill: palette.axisTick, fontSize: 10, fontFamily: 'Times New Roman' }}
                   tickLine={false}
                   axisLine={false}
                   width={isNarrow ? 38 : 52}
                 />
-                <Tooltip content={<ProjectionTooltip />} />
+                <Tooltip content={<ProjectionTooltip locale={locale} />} />
                 <Area
                   type="monotone"
                   dataKey="invested"
-                  name="Вложено"
+                  name={t(locale, 'legendInvested')}
                   stroke={palette.invested}
                   strokeWidth={1.5}
                   fill="url(#investedGrad)"
@@ -317,7 +326,7 @@ export default function App() {
                 <Area
                   type="monotone"
                   dataKey="total"
-                  name="Портфолио"
+                  name={t(locale, 'legendPortfolio')}
                   stroke={palette.accent}
                   strokeWidth={2}
                   fill="url(#totalGrad)"
@@ -328,23 +337,27 @@ export default function App() {
           </div>
         </section>
 
-        <section className="panel income" aria-label="Средна месечна печалба">
+        <section className="panel income" aria-label={t(locale, 'incomeAriaLabel')}>
           <div className="income-head">
             <div>
-              <div className="card-label">Средна месечна печалба</div>
-              <div className="income-value num">{formatCompactEur(monthlyGain)}</div>
+              <div className="card-label">{t(locale, 'incomeLabel')}</div>
+              <div className="income-value num">{formatCompactEur(monthlyGain, locale)}</div>
             </div>
             <div className="income-for">
-              за година {profitYear === 0 ? '0 (начален момент)' : profitYear}
+              {t(locale, 'incomeForYear', {
+                n: profitYear === 0 ? t(locale, 'incomeForYearZero') : profitYear,
+              })}
             </div>
           </div>
 
           <div>
             <div className="control-head">
               <label className="control-name" htmlFor="profit-year">
-                Година
+                {t(locale, 'controlYear')}
               </label>
-              <span className="control-value num">{profitYear} г.</span>
+              <span className="control-value num">
+                {t(locale, 'controlYearsValue', { n: profitYear })}
+              </span>
             </div>
             <input
               id="profit-year"
@@ -352,7 +365,7 @@ export default function App() {
               min={0}
               max={years}
               value={profitYear}
-              aria-valuetext={`година ${profitYear} от ${years}`}
+              aria-valuetext={t(locale, 'controlYearAriaValue', { year: profitYear, years })}
               onChange={(event) => setProfitYear(Number(event.target.value))}
             />
             <div className="scale">
@@ -362,10 +375,7 @@ export default function App() {
           </div>
         </section>
 
-        <p className="disclaimer">
-          Миналите резултати не гарантират бъдещи. Историческа номинална доходност
-          на S&amp;P 500 ~10.5%/год. Реална (след инфлация) ~7%.
-        </p>
+        <p className="disclaimer">{t(locale, 'disclaimer')}</p>
 
         {/*
           Plain in-bundle navigation, not target="_blank": both pages are
@@ -374,9 +384,13 @@ export default function App() {
           them in an external browser would be a regression, not a nicety.
         */}
         <p className="footer-links">
-          <a href="/privacy.html">Поверителност</a>
+          <a href={locale === 'en' ? '/privacy-en.html' : '/privacy.html'}>
+            {t(locale, 'footerPrivacy')}
+          </a>
           <span aria-hidden="true"> · </span>
-          <a href="/support.html">Поддръжка</a>
+          <a href={locale === 'en' ? '/support-en.html' : '/support.html'}>
+            {t(locale, 'footerSupport')}
+          </a>
         </p>
       </div>
     </div>
