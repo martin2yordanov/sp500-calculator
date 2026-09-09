@@ -16,9 +16,6 @@ import {
   formatSignedEur,
 } from '../lib/format'
 
-const UP = '#5ee3b9'
-const DOWN = '#f87171'
-
 export const RANGES = [
   { key: '1d', label: '1D', long: 'Последен ден' },
   { key: '5d', label: '1W', long: 'Последна седмица' },
@@ -37,7 +34,7 @@ function ChartNote({ children }) {
   )
 }
 
-export default function Sxr8Chart() {
+export default function Sxr8Chart({ palette }) {
   const [range, setRange] = useState('5y')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -115,7 +112,7 @@ export default function Sxr8Chart() {
   const { points, end, change, changePct, min, max } = series
   const activeRange = RANGES.find((entry) => entry.key === range) ?? RANGES[0]
   const isUp = (change ?? 0) >= 0
-  const lineColor = isUp ? UP : DOWN
+  const lineColor = isUp ? palette.up : palette.down
 
   // The reference labels sit outside the plot on the right, so the gutter has
   // to be reserved — but 64px of a phone-width chart is too much to give away.
@@ -157,7 +154,7 @@ export default function Sxr8Chart() {
             >
               <defs>
                 <linearGradient id="sxr8Grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={lineColor} stopOpacity={0.25} />
+                  <stop offset="0%" stopColor={lineColor} stopOpacity={palette.quoteFillOpacity} />
                   <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
                 </linearGradient>
                 <filter id="sxr8Glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -174,13 +171,13 @@ export default function Sxr8Chart() {
 
               <Tooltip
                 contentStyle={{
-                  background: '#0d0d0d',
-                  border: '1px solid #333',
+                  background: palette.tooltipBg,
+                  border: `1px solid ${palette.tooltipBorder}`,
                   borderRadius: 6,
                   fontFamily: "'Times New Roman', serif",
                   fontSize: 12,
                 }}
-                labelStyle={{ color: '#888' }}
+                labelStyle={{ color: palette.tooltipLabel }}
                 itemStyle={{ color: lineColor }}
                 labelFormatter={(value) => formatQuoteTimestamp(value, range)}
                 formatter={(value) => [formatEur(value), 'SXR8']}
@@ -188,12 +185,12 @@ export default function Sxr8Chart() {
 
               <ReferenceLine
                 y={min}
-                stroke="#2a2a2a"
+                stroke={palette.minLine}
                 strokeDasharray="2 4"
                 label={{
                   value: formatEur(min).replace(' €', ''),
                   position: 'right',
-                  fill: '#777',
+                  fill: palette.minLabel,
                   fontSize: labelSize,
                   fontFamily: "'Times New Roman', serif",
                 }}
@@ -204,7 +201,7 @@ export default function Sxr8Chart() {
                 label={{
                   value: formatEur(max).replace(' €', ''),
                   position: 'right',
-                  fill: '#bbb',
+                  fill: palette.maxLabel,
                   fontSize: labelSize,
                   fontFamily: "'Times New Roman', serif",
                 }}
@@ -217,7 +214,9 @@ export default function Sxr8Chart() {
                 strokeWidth={2}
                 fill="url(#sxr8Grad)"
                 dot={false}
-                filter="url(#sxr8Glow)"
+                // The glow reads as a halo lifting the line off a dark card.
+                // On white it just muddies the stroke, so it is dark-only.
+                filter={palette.glow ? 'url(#sxr8Glow)' : undefined}
                 isAnimationActive={false}
               />
             </AreaChart>
