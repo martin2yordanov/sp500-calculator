@@ -1,3 +1,4 @@
+import { hapticLight } from '../lib/haptics'
 import { t } from '../lib/i18n'
 
 /**
@@ -13,7 +14,10 @@ export default function LocaleToggle({ locale, onToggle }) {
     <button
       type="button"
       className="locale-toggle"
-      onClick={onToggle}
+      onClick={() => {
+        onToggle()
+        hapticLight()
+      }}
       aria-label={t(locale, 'localeToggleAriaLabel')}
       title={t(locale, 'localeToggleTitle')}
     >

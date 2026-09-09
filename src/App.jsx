@@ -7,6 +7,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { Capacitor } from '@capacitor/core'
+import { Share } from '@capacitor/share'
 import AmountField from './components/AmountField'
 import LocaleToggle from './components/LocaleToggle'
 import ShareButton from './components/ShareButton'
@@ -17,6 +19,7 @@ import { useMediaQuery } from './hooks/useMediaQuery'
 import { useTheme } from './hooks/useTheme'
 import { averageMonthlyGain, buildProjection, yearsToReach } from './lib/compound'
 import { formatAxisMoney, formatCompactEur } from './lib/format'
+import { hapticLight, hapticSelectionChanged, hapticSuccess } from './lib/haptics'
 import { t } from './lib/i18n'
 import {
   BOUNDS,
@@ -53,6 +56,9 @@ export default function App() {
   const [targetText, setTargetText] = useState(String(initialSettings.target))
   const [profitYear, setProfitYear] = useState(initialSettings.years)
   const [saved, setSaved] = useState(false)
+  // Distinguishes what the "saved" checkmark actually did, so the hint text
+  // underneath it never claims a clipboard copy that didn't happen.
+  const [savedVia, setSavedVia] = useState(null)
 
   const isNarrow = useMediaQuery('(max-width: 30em)')
   const { theme, toggle } = useTheme()
@@ -139,15 +145,37 @@ export default function App() {
     })
     window.history.replaceState({}, '', `?${params}`)
     saveSettings({ years, monthly, initial, rate, growth, target })
+
+    // Inside the native shell there is no ambient "paste this somewhere"
+    // affordance the way a desktop browser has — a share sheet is what a
+    // native app's "share this link" action is expected to do, so it
+    // replaces the clipboard copy there rather than supplementing it.
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Share.share({ title: t(locale, 'eyebrow'), url: window.location.href })
+        hapticSuccess()
+        setSavedVia('share')
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+        return
+      } catch {
+        // Dismissed by the visitor, or genuinely unavailable — fall through
+        // to the clipboard path below, same as the plain web experience.
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(window.location.href)
+      setSavedVia('clipboard')
     } catch {
       // Clipboard is blocked without a secure context or permission; the URL is
       // still updated, so the link remains shareable by hand.
+      setSavedVia(null)
     }
+    hapticSuccess()
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
-  }, [years, monthly, initial, rate, growth, target])
+  }, [years, monthly, initial, rate, growth, target, locale])
 
   const handleReset = useCallback(() => {
     setYears(DEFAULTS.years)
@@ -160,6 +188,7 @@ export default function App() {
     // Clear the query string too, otherwise a reload would restore the values
     // that were just discarded.
     window.history.replaceState({}, '', window.location.pathname)
+    hapticLight()
   }, [])
 
   return (
@@ -234,7 +263,10 @@ export default function App() {
               step={BOUNDS.years.step}
               value={years}
               aria-valuetext={t(locale, 'controlYearsAriaValue', { n: years })}
-              onChange={(event) => setYears(Number(event.target.value))}
+              onChange={(event) => {
+                setYears(Number(event.target.value))
+                hapticSelectionChanged()
+              }}
             />
             <div className="scale">
               <span>{BOUNDS.years.min}</span>
@@ -257,7 +289,10 @@ export default function App() {
               step={BOUNDS.rate.step}
               value={rate}
               aria-valuetext={t(locale, 'controlRateAriaValue', { n: rate })}
-              onChange={(event) => setRate(Number(event.target.value))}
+              onChange={(event) => {
+                setRate(Number(event.target.value))
+                hapticSelectionChanged()
+              }}
             />
             <div className="scale">
               <span>{BOUNDS.rate.min}%</span>
@@ -303,7 +338,10 @@ export default function App() {
               step={BOUNDS.growth.step}
               value={growth}
               aria-valuetext={t(locale, 'controlGrowthAriaValue', { n: growth })}
-              onChange={(event) => setGrowth(Number(event.target.value))}
+              onChange={(event) => {
+                setGrowth(Number(event.target.value))
+                hapticSelectionChanged()
+              }}
             />
             <div className="scale">
               <span>{BOUNDS.growth.min}%</span>
@@ -331,7 +369,7 @@ export default function App() {
             {t(locale, 'reset')}
           </button>
           <span className="save-hint" role="status" aria-live="polite">
-            {saved ? t(locale, 'saveHint') : ''}
+            {saved && savedVia === 'clipboard' ? t(locale, 'saveHint') : ''}
           </span>
         </div>
 
@@ -432,7 +470,10 @@ export default function App() {
               max={years}
               value={profitYear}
               aria-valuetext={t(locale, 'controlYearAriaValue', { year: profitYear, years })}
-              onChange={(event) => setProfitYear(Number(event.target.value))}
+              onChange={(event) => {
+                setProfitYear(Number(event.target.value))
+                hapticSelectionChanged()
+              }}
             />
             <div className="scale">
               <span>0</span>

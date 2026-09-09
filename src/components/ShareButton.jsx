@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { hapticSuccess, hapticWarning } from '../lib/haptics'
 import { t } from '../lib/i18n'
 import { renderShareCard, shareOrDownload } from '../lib/shareCard'
 
@@ -26,11 +27,13 @@ export default function ShareButton({ locale, palette, cardData }) {
       })
       await shareOrDownload(blob, 'sp500-calculator.png')
       setState('idle')
+      hapticSuccess()
     } catch {
       // Canvas or share/download can fail for reasons outside the app's
       // control (a locked-down WebView, an out-of-memory tab); the button
       // should say so rather than pretend nothing happened.
       setState('failed')
+      hapticWarning()
       setTimeout(() => setState('idle'), 3000)
     }
   }, [cardData, locale, palette])

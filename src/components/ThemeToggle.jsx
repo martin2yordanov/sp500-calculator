@@ -1,3 +1,4 @@
+import { hapticLight } from '../lib/haptics'
 import { t } from '../lib/i18n'
 
 /**
@@ -30,7 +31,10 @@ export default function ThemeToggle({ theme, onToggle, locale }) {
     <button
       type="button"
       className="theme-toggle"
-      onClick={onToggle}
+      onClick={() => {
+        onToggle()
+        hapticLight()
+      }}
       // The button switches rather than reporting state, so the name says what
       // pressing it does. aria-pressed would be ambiguous here.
       aria-label={t(locale, goingLight ? 'themeToLight' : 'themeToDark')}

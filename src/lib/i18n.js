@@ -111,6 +111,18 @@ const STRINGS = {
     shareCardCaption: 'Изчислено с калкулатор за индексен фонд S&P 500',
     shareCardHorizon: '{years} г. · {rate}% годишно',
     shareFailed: 'Споделянето не бе успешно — картинката е изтеглена вместо това.',
+
+    priceAlertCta: 'Известие при цена',
+    priceAlertFieldLabel: 'Известие при цена (€)',
+    priceAlertConfirm: 'Постави',
+    priceAlertCancel: 'Отказ',
+    priceAlertArmedAbove: 'Известие при ≥ {price}',
+    priceAlertArmedBelow: 'Известие при ≤ {price}',
+    priceAlertRemoveAriaLabel: 'Премахни известието за цена',
+    priceAlertTriggeredTitle: 'SXR8 достигна целта',
+    priceAlertTriggeredBody: 'Цената достигна {price}',
+    priceAlertTriggeredBanner: 'Известие: цената достигна {price}',
+    priceAlertDismiss: 'Скрий',
   },
   en: {
     eyebrow: 'Index fund calculator',
@@ -206,6 +218,18 @@ const STRINGS = {
     shareCardCaption: 'Calculated with the S&P 500 index fund calculator',
     shareCardHorizon: '{years} yr · {rate}% annually',
     shareFailed: 'Sharing did not work — the image was downloaded instead.',
+
+    priceAlertCta: 'Price alert',
+    priceAlertFieldLabel: 'Alert price (€)',
+    priceAlertConfirm: 'Set',
+    priceAlertCancel: 'Cancel',
+    priceAlertArmedAbove: 'Alert at ≥ {price}',
+    priceAlertArmedBelow: 'Alert at ≤ {price}',
+    priceAlertRemoveAriaLabel: 'Remove the price alert',
+    priceAlertTriggeredTitle: 'SXR8 hit your target',
+    priceAlertTriggeredBody: 'Price reached {price}',
+    priceAlertTriggeredBanner: 'Alert: price reached {price}',
+    priceAlertDismiss: 'Dismiss',
   },
 }
 
