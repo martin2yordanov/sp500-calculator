@@ -134,9 +134,19 @@ body {
    Shell
    --------------------------------------------------------------------------- */
 .shell {
+  --shell-pad-block: clamp(1.25rem, 1rem + 2vw, 2rem);
+
   min-height: 100vh;
   min-height: 100dvh;
-  padding: clamp(1.25rem, 1rem + 2vw, 2rem) var(--gutter);
+  padding: var(--shell-pad-block) var(--gutter);
+  /* Summed, not max()'d like the others: the status bar is an occupied strip,
+     not a rounded corner to dodge. Content has to start below it *and* keep
+     its normal breathing room, or the eyebrow ends up flush against the clock.
+     Zero in a browser tab (Safari's own chrome already reserves that space),
+     so this changes nothing on the web — it earns its keep in the home-screen
+     app and in the Capacitor shell, where the web view really does start at
+     the physical top of the screen. */
+  padding-top: calc(var(--shell-pad-block) + env(safe-area-inset-top));
   padding-left: max(var(--gutter), env(safe-area-inset-left));
   padding-right: max(var(--gutter), env(safe-area-inset-right));
   padding-bottom: max(2rem, env(safe-area-inset-bottom));
