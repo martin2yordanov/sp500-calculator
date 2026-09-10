@@ -5,7 +5,7 @@ export const BOUNDS = {
   rate: { min: 1, max: 20, step: 0.5 },
   monthly: { min: 0, max: 1_000_000 },
   initial: { min: 0, max: 10_000_000 },
-  growth: { min: 0, max: 15, step: 0.5 },
+  growth: { min: 0, max: 1000, step: 50 },
   target: { min: 0, max: 100_000_000 },
 }
 

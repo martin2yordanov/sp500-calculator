@@ -88,7 +88,7 @@ export default function App() {
   }, [years])
 
   const rows = useMemo(
-    () => buildProjection({ years, monthly, initial, rate, monthlyGrowthPct: growth }),
+    () => buildProjection({ years, monthly, initial, rate, yearlyRaise: growth }),
     [years, monthly, initial, rate, growth],
   )
 
@@ -104,7 +104,7 @@ export default function App() {
   // projection above so "when do I reach X" and "what do I have after N
   // years" never disagree with each other.
   const goalMonths = useMemo(
-    () => yearsToReach({ target, monthly, initial, rate, monthlyGrowthPct: growth }),
+    () => yearsToReach({ target, monthly, initial, rate, yearlyRaise: growth }),
     [target, monthly, initial, rate, growth],
   )
 
@@ -328,7 +328,7 @@ export default function App() {
               <label className="control-name" htmlFor="growth">
                 {t(locale, 'controlGrowth')}
               </label>
-              <span className="control-value num">{growth}%</span>
+              <span className="control-value num">{formatCompactEur(growth, locale)}</span>
             </div>
             <input
               id="growth"
@@ -344,9 +344,9 @@ export default function App() {
               }}
             />
             <div className="scale">
-              <span>{BOUNDS.growth.min}%</span>
+              <span>{formatCompactEur(BOUNDS.growth.min, locale)}</span>
               <span className="scale-mid">{t(locale, 'controlGrowthHint')}</span>
-              <span>{BOUNDS.growth.max}%</span>
+              <span>{formatCompactEur(BOUNDS.growth.max, locale)}</span>
             </div>
           </div>
         </div>

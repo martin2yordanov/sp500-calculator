@@ -93,8 +93,8 @@ const STRINGS = {
     axisThousand: 'к',
 
     controlGrowth: 'Годишен ръст на вноската',
-    controlGrowthHint: '0% = постоянна вноска',
-    controlGrowthAriaValue: '{n} процента на година',
+    controlGrowthHint: '0 € = постоянна вноска',
+    controlGrowthAriaValue: '{n} евро на година',
 
     goalAriaLabel: 'Кога ще стигна тази сума?',
     goalHeading: 'Кога ще стигна тази сума?',
@@ -200,8 +200,8 @@ const STRINGS = {
     axisThousand: 'k',
 
     controlGrowth: 'Annual contribution growth',
-    controlGrowthHint: '0% = flat contribution',
-    controlGrowthAriaValue: '{n} percent per year',
+    controlGrowthHint: '€0 = flat contribution',
+    controlGrowthAriaValue: '{n} euros per year',
 
     goalAriaLabel: 'When will I reach this amount?',
     goalHeading: 'When will I reach this amount?',
