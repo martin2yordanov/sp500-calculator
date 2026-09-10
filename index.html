@@ -8,7 +8,15 @@
     <meta name="theme-color" content="#080808" />
     <meta name="description" content="Калкулатор за лихва върху лихва при инвестиция в индексен фонд върху S&P 500, с живи цени на SXR8." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!--
+      Was black-translucent, which put the page under the status bar and, worse,
+      forces white status-bar text — invisible against the light theme's #faf9f6.
+      "default" makes iOS reserve the strip and tint it from theme-color, which
+      useTheme already keeps in step with the active theme, so the clock and
+      battery stay legible in both. The safe-area padding in styles.css is what
+      covers the Capacitor shell, where this tag has no say at all.
+    -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <!-- Home-screen label. The full title truncates to an ellipsis under the icon. -->
     <meta name="apple-mobile-web-app-title" content="S&P 500" />
     <title>S&P 500 Калкулатор</title>
