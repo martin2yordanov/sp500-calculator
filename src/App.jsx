@@ -7,11 +7,20 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import AccountButton from './auth/AccountButton'
 import Sxr8Chart from './components/Sxr8Chart'
+import { useCloudSettings } from './hooks/useCloudSettings'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { averageMonthlyGain, buildProjection } from './lib/compound'
 import { formatAxisMoney, formatCompactEur } from './lib/format'
-import { BOUNDS, loadSettings, parseAmount, saveSettings } from './lib/settings'
+import { isNative, tapFeedback } from './lib/native'
+import {
+  BOUNDS,
+  loadSettings,
+  parseAmount,
+  saveSettings,
+  settingsToParams,
+} from './lib/settings'
 
 const ACCENT = '#e8ff5a'
 const INVESTED = '#3b82f6'
@@ -40,6 +49,7 @@ export default function App() {
   const [initialText, setInitialText] = useState(String(initialSettings.initial))
   const [profitYear, setProfitYear] = useState(initialSettings.years)
   const [saved, setSaved] = useState(false)
+  const [saveHint, setSaveHint] = useState('')
 
   const isNarrow = useMediaQuery('(max-width: 30em)')
 
@@ -62,6 +72,18 @@ export default function App() {
     setProfitYear((current) => Math.min(current, years))
   }, [years])
 
+  // Called once per sign-in, with whatever the account last stored. The amount
+  // fields are text, so the numbers have to be pushed back through String().
+  const applyRemoteSettings = useCallback((next) => {
+    setYears(next.years)
+    setRate(next.rate)
+    setMonthlyText(String(next.monthly))
+    setInitialText(String(next.initial))
+    setProfitYear((current) => Math.min(current, next.years))
+  }, [])
+
+  const sync = useCloudSettings({ onRemoteSettings: applyRemoteSettings })
+
   const rows = useMemo(
     () => buildProjection({ years, monthly, initial, rate }),
     [years, monthly, initial, rate],
@@ -76,29 +98,51 @@ export default function App() {
   const monthlyGain = averageMonthlyGain(rows, profitYear)
 
   const handleSave = useCallback(async () => {
-    const params = new URLSearchParams({
-      y: String(years),
-      m: String(monthly),
-      i: String(initial),
-      r: String(rate),
-    })
-    window.history.replaceState({}, '', `?${params}`)
-    saveSettings({ years, monthly, initial, rate })
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-    } catch {
-      // Clipboard is blocked without a secure context or permission; the URL is
-      // still updated, so the link remains shareable by hand.
+    saveSettings(settings)
+
+    // Inside the iOS app the address bar is not a thing and window.location is
+    // `https://localhost`, so a copied link would be useless. The URL trick is
+    // web-only; the account is what carries settings between devices there.
+    let linkCopied = false
+    if (!isNative()) {
+      window.history.replaceState({}, '', `?${settingsToParams(settings)}`)
+      try {
+        await navigator.clipboard.writeText(window.location.href)
+        linkCopied = true
+      } catch {
+        // Clipboard is blocked without a secure context or permission; the URL
+        // is still updated, so the link remains shareable by hand.
+      }
     }
+
+    const storedInAccount = sync.active ? await sync.push(settings) : false
+
+    setSaveHint(
+      [
+        storedInAccount
+          ? 'Запазено в акаунта ти'
+          : sync.active
+            ? 'Запазено само на това устройство — синхронизацията не успя'
+            : 'Запазено на това устройство',
+        linkCopied ? 'линкът е копиран' : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    )
+
+    await tapFeedback()
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }, [years, monthly, initial, rate])
+    setTimeout(() => setSaved(false), 2500)
+  }, [settings, sync])
 
   return (
     <div className="shell">
       <div className="container">
         <header>
-          <div className="eyebrow">Калкулатор за индексен фонд</div>
+          <div className="masthead">
+            <div className="eyebrow">Калкулатор за индексен фонд</div>
+            <AccountButton sync={sync} />
+          </div>
           <h1 className="title">
             S&amp;P 500 <span className="title-accent">Лихва върху лихва</span>
           </h1>
@@ -284,7 +328,7 @@ export default function App() {
             {saved ? '✓ Запазено' : 'Запази'}
           </button>
           <span className="save-hint" role="status" aria-live="polite">
-            {saved ? 'Линкът е копиран — отвори го от всеки браузър' : ''}
+            {saved ? saveHint : ''}
           </span>
         </div>
 

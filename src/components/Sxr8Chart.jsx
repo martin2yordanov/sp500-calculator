@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { apiUrl } from '../lib/api'
 import {
   formatEur,
   formatPct,
@@ -64,7 +65,16 @@ export default function Sxr8Chart() {
     setLoading(true)
     setError(null)
 
-    fetch(`/api/sxr8?range=${range}`, { signal: controller.signal })
+    // `apiUrl` throws when a native build was compiled without an API base,
+    // so the call is made inside the chain rather than before it.
+    Promise.resolve()
+      .then(() =>
+        fetch(apiUrl(`/api/sxr8?range=${range}`), {
+          signal: controller.signal,
+          // Cross-origin from the iOS WebView, and there is nothing to send.
+          credentials: 'omit',
+        }),
+      )
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         return response.json()
@@ -143,7 +153,10 @@ export default function Sxr8Chart() {
         ) : error ? (
           <ChartNote>
             <span className="chart-note-stack">
-              Грешка при зареждане на данните
+              {/* The message matters here: a missing VITE_API_BASE_URL in a
+                  native build looks exactly like a network failure without it. */}
+              <span>Грешка при зареждане на данните</span>
+              <span className="chart-note-detail">{error}</span>
               <button type="button" className="retry" onClick={retry}>
                 Опитай отново
               </button>

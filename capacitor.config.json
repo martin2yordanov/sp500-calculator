@@ -1,0 +1,31 @@
+{
+  "appId": "bg.fathers.sp500",
+  "appName": "SP500 Calculator",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": false,
+    "backgroundColor": "#080808"
+  },
+  "server": {
+    "iosScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#080808ff",
+      "showSpinner": false
+    },
+    "Keyboard": {
+      "resize": "native",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#080808",
+      "overlaysWebView": true
+    }
+  }
+}
