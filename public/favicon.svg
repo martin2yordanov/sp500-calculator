@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>S&amp;P 500 Калкулатор</title>
+  <!--
+    Tab favicon, and the source for the 16/32/48px entries in favicon.ico.
+
+    Same artwork as icons/app-icon.svg with two deliberate omissions:
+
+    - No "S&P 500" wordmark. A tab renders this at 16px, where seven glyphs get
+      about two pixels each. The wordmark appears at 152px and up.
+    - No glow. At these sizes the blur is imperceptible but still costs contrast
+      at the stroke's edge, so dropping it buys sharpness for free.
+
+    Being text-free also means this file — the only one of the two that is
+    actually served — never depends on a font resolving in the viewer's browser.
+
+    Full-bleed square with no corner radius: iOS applies its own mask to
+    apple-touch-icon, and rounding here would round already-rounded corners.
+  -->
+  <defs>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5ee3b9" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#5ee3b9" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#0b0f10"/>
+
+  <path d="M0 747 L120 620 L300 430 L395 510 L520 330 L620 440 L800 248 L1024 9 L1024 1024 L0 1024 Z"
+        fill="url(#area)"/>
+
+  <path d="M120 620 L300 430 L395 510 L520 330 L620 440 L800 248"
+        fill="none" stroke="#5ee3b9" stroke-width="58"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M880 162 L853 281 L763 197 Z" fill="#5ee3b9"/>
+</svg>

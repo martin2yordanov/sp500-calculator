@@ -12,18 +12,37 @@ export const BOUNDS = {
   rate: { min: 1, max: 20, step: 0.5 },
   monthly: { min: 0, max: 1_000_000 },
   initial: { min: 0, max: 10_000_000 },
+  growth: { min: 0, max: 1000, step: 50 },
+  target: { min: 0, max: 100_000_000 },
 }
 
-export const DEFAULTS = { years: 20, monthly: 200, initial: 1000, rate: 10.5 }
+export const DEFAULTS = {
+  years: 20,
+  monthly: 200,
+  initial: 1000,
+  rate: 10.5,
+  growth: 0,
+  target: 100_000,
+}
 
 export const SETTING_KEYS = Object.keys(DEFAULTS)
+
+/** URL param name per setting, kept short because the link is meant to be shared. */
+export const PARAM_OF = {
+  years: 'y',
+  monthly: 'm',
+  initial: 'i',
+  rate: 'r',
+  growth: 'g',
+  target: 't',
+}
 
 const clamp = (value, { min, max }) => Math.min(max, Math.max(min, value))
 
 /**
  * Coerce anything (URL string, stored JSON, request body, keystroke) into a
  * usable number. Falls back to the default when the input is not finite, which
- * is what keeps a hand-edited link like `?y=abc` from turning the sliders into
+ * is what kept a hand-edited link like `?y=abc` from turning the sliders into
  * NaN.
  */
 export const sanitizeSetting = (raw, key) => {

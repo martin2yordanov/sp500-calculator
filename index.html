@@ -4,20 +4,66 @@
     <meta charset="UTF-8" />
     <!-- viewport-fit=cover so the safe-area insets in styles.css actually receive values on notched iPhones -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#080808" />
     <meta name="description" content="Калкулатор за лихва върху лихва при инвестиция в индексен фонд върху S&P 500, с живи цени на SXR8." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <!-- What iOS writes under the icon when the site is added to the home
-         screen; the full title is too long and gets truncated there. -->
+    <!--
+      Was black-translucent, which put the page under the status bar and, worse,
+      forces white status-bar text — invisible against the light theme's #faf9f6.
+      "default" makes iOS reserve the strip and tint it from theme-color, which
+      useTheme already keeps in step with the active theme, so the clock and
+      battery stay legible in both. The safe-area padding in styles.css is what
+      covers the Capacitor shell, where this tag has no say at all.
+    -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- Home-screen label. The full title truncates to an ellipsis under the icon. -->
     <meta name="apple-mobile-web-app-title" content="S&P 500" />
     <title>S&P 500 Калкулатор</title>
 
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <!-- Home-screen bookmarks on iOS read this and ignore the manifest. -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- .ico first as the fallback for browsers without SVG favicon support
+         (Safari below 16); anything newer prefers the vector and stays sharp at
+         any zoom or display density. -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- iOS ignores SVG here and will upscale whatever single PNG it is given,
+         so each device size it asks for is supplied at its exact pixel size. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
+
     <link rel="manifest" href="/manifest.webmanifest" />
+
+    <script>
+      /*
+        Resolve the theme before first paint. Without this the stylesheet's
+        default (dark) paints first and a light-preferring visitor sees a flash
+        before React mounts and sets the attribute.
+
+        Deliberately duplicates initialTheme() from src/lib/theme.js — it has to
+        run inline, ahead of the bundle. Keep the storage key and the two
+        theme-colour values in step with that module.
+      */
+      (function () {
+        try {
+          var stored = localStorage.getItem('sp500-theme')
+          var theme =
+            stored === 'dark' || stored === 'light'
+              ? stored
+              : window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark'
+          document.documentElement.dataset.theme = theme
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) {
+            meta.setAttribute('content', theme === 'light' ? '#faf9f6' : '#080808')
+          }
+        } catch (e) {
+          /* Storage or matchMedia unavailable: the stylesheet default stands. */
+        }
+      })()
+    </script>
 
     <!-- Fonts move here from a runtime-injected @import: that pattern blocks render and
          re-parses on every mount. preconnect + a single stylesheet is measurably faster. -->

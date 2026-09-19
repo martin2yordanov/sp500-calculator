@@ -4,7 +4,6 @@ import App from './App'
 import { AuthProvider } from './auth/AuthProvider'
 import SsoCallback from './auth/SsoCallback'
 import { authEnabled, WEB_SSO_PATH } from './auth/config'
-import { bootstrapNative } from './lib/native'
 import './styles.css'
 
 // The app has no router: one extra screen does not pay for one. The OAuth
@@ -21,8 +20,3 @@ createRoot(document.getElementById('root')).render(
     <AuthProvider>{isSsoCallback ? <SsoCallback /> : <App />}</AuthProvider>
   </StrictMode>,
 )
-
-// Deliberately after the first render: the splash screen is configured not to
-// auto-hide, so dismissing it here is what guarantees the user never sees a
-// blank window between the launch image and the app.
-bootstrapNative()

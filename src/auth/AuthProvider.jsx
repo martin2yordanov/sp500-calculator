@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo } from 'react'
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-react'
 import { authEnabled, publishableKey } from './config'
 import { clerkInstance, forgetNativeSession } from './clerkInstance'
-import { isNative } from '../lib/native'
+import { isNative } from '../lib/api'
 
 /**
  * What the app is allowed to know about the session.

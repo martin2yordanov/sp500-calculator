@@ -4,16 +4,17 @@ import Sheet from './Sheet'
 import { useSession } from './AuthProvider'
 import { messageOf } from './errors'
 import { forgetNativeSession } from './clerkInstance'
+import { t } from '../lib/i18n'
 
-const SYNC_TEXT = {
-  idle: 'Настройките се пазят при натискане на „Запази“.',
-  pulling: 'Изтегляне на запазените настройки…',
-  pushing: 'Запазване в облака…',
-  synced: 'Настройките са синхронизирани.',
-  error: 'Синхронизацията не успя.',
+const SYNC_KEY = {
+  idle: 'syncIdle',
+  pulling: 'syncPulling',
+  pushing: 'syncPushing',
+  synced: 'syncSynced',
+  error: 'syncError',
 }
 
-export default function AccountSheet({ onClose, sync }) {
+export default function AccountSheet({ locale, onClose, sync }) {
   const { user: profile, signOut } = useSession()
   const { user } = useUser()
 
@@ -28,10 +29,10 @@ export default function AccountSheet({ onClose, sync }) {
       await signOut()
       onClose()
     } catch (cause) {
-      setError(messageOf(cause))
+      setError(messageOf(cause, locale))
       setBusy(null)
     }
-  }, [signOut, onClose])
+  }, [signOut, onClose, locale])
 
   const handleDelete = useCallback(async () => {
     setBusy('delete')
@@ -43,13 +44,13 @@ export default function AccountSheet({ onClose, sync }) {
       await forgetNativeSession()
       onClose()
     } catch (cause) {
-      setError(messageOf(cause))
+      setError(messageOf(cause, locale))
       setBusy(null)
     }
-  }, [user, onClose])
+  }, [user, onClose, locale])
 
   return (
-    <Sheet title="Акаунт" onClose={onClose}>
+    <Sheet title={t(locale, 'authAccount')} locale={locale} onClose={onClose}>
       <div className="account-identity">
         {profile?.imageUrl ? (
           <img className="account-avatar" src={profile.imageUrl} alt="" />
@@ -60,12 +61,14 @@ export default function AccountSheet({ onClose, sync }) {
         )}
         <div className="account-identity-text">
           {profile?.name && <div className="account-name">{profile.name}</div>}
-          <div className="account-email">{profile?.email ?? 'Без имейл'}</div>
+          <div className="account-email">
+            {profile?.email ?? t(locale, 'authNoEmail')}
+          </div>
         </div>
       </div>
 
       <p className="sheet-lede" role="status" aria-live="polite">
-        {SYNC_TEXT[sync?.status] ?? SYNC_TEXT.idle}
+        {t(locale, SYNC_KEY[sync?.status] ?? 'syncIdle')}
         {sync?.status === 'error' && sync.error ? ` (${sync.error})` : ''}
       </p>
 
@@ -75,7 +78,7 @@ export default function AccountSheet({ onClose, sync }) {
         onClick={handleSignOut}
         disabled={busy !== null}
       >
-        {busy === 'signOut' ? 'Излизане…' : 'Изход'}
+        {busy === 'signOut' ? t(locale, 'authSigningOut') : t(locale, 'authSignOut')}
       </button>
 
       {/* App Store guideline 5.1.1(v): an app that lets people create an
@@ -84,10 +87,7 @@ export default function AccountSheet({ onClose, sync }) {
       <div className="account-danger">
         {confirmingDelete ? (
           <>
-            <p className="account-danger-warning">
-              Това изтрива акаунта и запазените настройки завинаги. Действието е
-              необратимо.
-            </p>
+            <p className="account-danger-warning">{t(locale, 'authDeleteWarning')}</p>
             <div className="account-danger-actions">
               <button
                 type="button"
@@ -95,7 +95,9 @@ export default function AccountSheet({ onClose, sync }) {
                 onClick={handleDelete}
                 disabled={busy !== null}
               >
-                {busy === 'delete' ? 'Изтриване…' : 'Да, изтрий акаунта'}
+                {busy === 'delete'
+                  ? t(locale, 'authDeleting')
+                  : t(locale, 'authDeleteConfirm')}
               </button>
               <button
                 type="button"
@@ -103,7 +105,7 @@ export default function AccountSheet({ onClose, sync }) {
                 onClick={() => setConfirmingDelete(false)}
                 disabled={busy !== null}
               >
-                Отказ
+                {t(locale, 'authCancel')}
               </button>
             </div>
           </>
@@ -114,7 +116,7 @@ export default function AccountSheet({ onClose, sync }) {
             onClick={() => setConfirmingDelete(true)}
             disabled={busy !== null}
           >
-            Изтрий акаунта
+            {t(locale, 'authDelete')}
           </button>
         )}
       </div>

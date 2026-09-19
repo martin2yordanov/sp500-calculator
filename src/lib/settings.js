@@ -1,6 +1,7 @@
 import {
   BOUNDS,
   DEFAULTS,
+  PARAM_OF,
   SETTING_KEYS,
   sanitizeSetting,
   sanitizeSettings,
@@ -10,9 +11,6 @@ import {
 export { BOUNDS, DEFAULTS, SETTING_KEYS, sanitizeSettings, settingsEqual }
 
 const STORAGE_KEY = 'sp500-settings'
-
-/** URL param name per setting, kept short because the link is meant to be shared. */
-const PARAM_OF = { years: 'y', monthly: 'm', initial: 'i', rate: 'r' }
 
 const readStored = () => {
   try {
@@ -48,7 +46,7 @@ export const loadSettings = () => {
   return Object.fromEntries(SETTING_KEYS.map((key) => [key, pick(key)]))
 }
 
-/** The `?y=&m=&i=&r=` query string behind the Запази button. */
+/** The shareable query string behind the Запази button. */
 export const settingsToParams = (settings) =>
   new URLSearchParams(
     SETTING_KEYS.map((key) => [PARAM_OF[key], String(settings[key])]),
@@ -59,8 +57,9 @@ export const clampSetting = (value, key) => sanitizeSetting(value, key)
 /**
  * Parses what is currently typed in an amount field. An empty field counts as
  * zero rather than snapping back to a default, so the field can be cleared and
- * retyped. A decimal comma is accepted because that is what a Bulgarian
- * keyboard offers.
+ * retyped — the old inputs coerced every keystroke through `Math.max(0, +value)`
+ * and so refused to go empty. A decimal comma is accepted because that is what
+ * a Bulgarian keyboard offers.
  */
 export const parseAmount = (text, key) => {
   const trimmed = String(text).trim()

@@ -1,6 +1,7 @@
 import { App as CapacitorApp } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
-import { isNative } from '../lib/native'
+import { isNative } from '../lib/api'
+import { AuthError } from './errors'
 import { NATIVE_SSO_REDIRECT, WEB_SSO_PATH } from './config'
 
 /** Five minutes is longer than any real Apple/Google consent screen takes. */
@@ -8,8 +9,9 @@ const SSO_TIMEOUT_MS = 5 * 60 * 1000
 
 export class SsoCancelled extends Error {
   constructor() {
-    super('Входът беше прекратен.')
+    super('authErrorCancelled')
     this.name = 'SsoCancelled'
+    this.messageKey = 'authErrorCancelled'
   }
 }
 
@@ -37,8 +39,8 @@ function openAndAwaitRedirect(url) {
       )
     }
 
-    // Both listeners are registered asynchronously, so each one has to check
-    // whether the race was already decided before it finished attaching.
+    // Both listeners attach asynchronously, so each has to check whether the
+    // race was already decided before it finished attaching.
     CapacitorApp.addListener('appUrlOpen', ({ url: opened }) => {
       if (!opened?.startsWith(NATIVE_SSO_REDIRECT)) return
       Browser.close().catch(() => {})
@@ -58,15 +60,13 @@ function openAndAwaitRedirect(url) {
     })
 
     timer = setTimeout(
-      () => settle(reject, new Error('Изтече времето за вход.')),
+      () => settle(reject, new AuthError('authErrorTimeout')),
       SSO_TIMEOUT_MS,
     )
 
-    Browser.open({
-      url,
-      presentationStyle: 'popover',
-      toolbarColor: '#080808',
-    }).catch((cause) => settle(reject, cause))
+    Browser.open({ url, presentationStyle: 'popover' }).catch((cause) =>
+      settle(reject, cause),
+    )
   })
 }
 
@@ -74,7 +74,7 @@ async function nativeSso({ strategy, signIn, signUp, setActive }) {
   await signIn.create({ strategy, redirectUrl: NATIVE_SSO_REDIRECT })
 
   const target = signIn.firstFactorVerification?.externalVerificationRedirectURL
-  if (!target) throw new Error('Clerk не върна адрес за вход.')
+  if (!target) throw new AuthError('authErrorNoRedirect')
 
   const returned = await openAndAwaitRedirect(target.toString())
 

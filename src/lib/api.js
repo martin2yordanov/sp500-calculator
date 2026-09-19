@@ -1,21 +1,32 @@
 import { Capacitor } from '@capacitor/core'
 
-const BASE = String(import.meta.env.VITE_API_BASE_URL ?? '')
+/**
+ * Base URL prefixed onto every API call.
+ *
+ * On the web this is empty on purpose: Vercel serves the static build and
+ * `/api/sxr8` from the same origin, so a relative path is both correct and
+ * immune to ever pointing at the wrong deployment (a preview build calls its
+ * own preview's function, production calls its own).
+ *
+ * The native iOS/Android shell has no such origin — Capacitor serves the
+ * bundled `dist/` from a local scheme, where no serverless function exists.
+ * `VITE_API_BASE_URL` is baked in at build time for that target only (see the
+ * `build:native` script in package.json) and points at the deployed API.
+ */
+export const API_BASE = String(import.meta.env.VITE_API_BASE_URL ?? '')
   .trim()
   .replace(/\/+$/, '')
 
 export const isNative = () => Capacitor.isNativePlatform()
 
 /**
- * On the web the app and the functions share an origin, so a relative path is
- * enough. Inside the iOS WebView the bundle is served from `https://localhost`,
- * where `/api/sxr8` resolves against the app bundle and never leaves the
- * device — so a native build has to be compiled with VITE_API_BASE_URL set to
- * the deployment that hosts the functions.
+ * A native build without a base URL resolves `/api/sxr8` against the app
+ * bundle, so the request never leaves the device and fails as an opaque
+ * parse error. Saying so is worth more than a relative path that cannot work.
  */
-export function apiUrl(path) {
+export const apiUrl = (path) => {
   const suffix = path.startsWith('/') ? path : `/${path}`
-  if (BASE) return `${BASE}${suffix}`
+  if (API_BASE) return `${API_BASE}${suffix}`
   if (isNative()) {
     throw new Error(
       'Липсва VITE_API_BASE_URL — native билдът не знае къде се хостват функциите.',
@@ -53,9 +64,7 @@ export async function apiFetch(path, { getToken, body, method = 'GET', signal } 
 
   const payload = await response.json().catch(() => null)
 
-  if (!response.ok) {
-    throw new Error(payload?.error ?? `HTTP ${response.status}`)
-  }
+  if (!response.ok) throw new Error(payload?.error ?? `HTTP ${response.status}`)
 
   return payload
 }

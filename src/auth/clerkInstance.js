@@ -6,7 +6,7 @@
 // draws its own sign-in screen, so nothing is lost.
 import { Clerk } from '@clerk/clerk-js/no-rhc'
 import { authEnabled, publishableKey } from './config'
-import { isNative } from '../lib/native'
+import { isNative } from '../lib/api'
 import { CLIENT_JWT_KEY, tokenCache } from './tokenCache'
 
 /**

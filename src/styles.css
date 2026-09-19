@@ -17,9 +17,22 @@
   --faint: #4a4a4a;
   --label: #555;
 
+  /* The selected segment in the range strip. It was #1f1f1f hardcoded, which in
+     the light theme put near-black text on a near-black pill — the active label
+     vanished. */
+  --tab-active-bg: #1f1f1f;
+  --tab-active-shadow: none;
+
   --accent: #e8ff5a;
+  /* The Save button is lime-on-near-black in both themes — bright lime holds up
+     as a filled background on white, where it fails as text or a thin line. */
+  --accent-solid: #e8ff5a;
+  --accent-solid-text: #080808;
   --up: #5ee3b9;
   --down: #f87171;
+  /* Amber, not --down: a stale price is missing information, not a loss, and
+     red here would read as a crash. 6.48:1 on --surface (#0d0d0d). */
+  --stale: #c48a1f;
   --gain: #4ade80;
   --invested: #3b82f6;
 
@@ -35,6 +48,53 @@
   --gutter: clamp(0.875rem, 0.5rem + 1.5vw, 1.5rem);
 
   color-scheme: dark;
+}
+
+/*
+  Light theme. Applied from an attribute rather than `prefers-color-scheme` so
+  the toggle can override the OS in both directions; index.html sets the
+  attribute before this stylesheet's first paint, and useTheme keeps it current.
+
+  Only the tokens change — no layout rule is duplicated. The one value that is
+  not a straight inversion is the accent: lime at #e8ff5a is invisible on white,
+  so anything drawn as text or a line takes an olive of the same hue, while the
+  bright lime survives as --accent-solid on the Save button.
+*/
+:root[data-theme='light'] {
+  --bg: #faf9f6;
+  --surface: #ffffff;
+  --surface-2: #f4f3ef;
+  --border: #e6e4dd;
+  --border-2: #eceae3;
+  --track: #d6d3c9;
+
+  --text: #1a1a17;
+  --muted: #55534c;
+  /* Chosen by measuring, not by eye. Against --bg these give 6.56:1 (--dim) and
+     5.17:1 (--faint), so the quiet labels, the lede, the disclaimer and the
+     slider endpoints all clear 4.5:1. --faint stays the lighter of the two,
+     since on a light ground lighter is quieter — the inverse of the dark set. */
+  --dim: #5c5a53;
+  --faint: #6b6a60;
+  --label: #5c5a53;
+
+  /* All four are darkened past their first values so the text they colour
+     clears 4.5:1 on white as well as on --bg: 4.77 / 4.86 / 5.86 / 6.37. */
+  /* White on the grey strip, the way a light segmented control usually reads,
+     with a hairline shadow doing the separating instead of a border. */
+  --tab-active-bg: #ffffff;
+  --tab-active-shadow: 0 1px 2px rgba(26, 26, 23, 0.14);
+
+  --accent: #647700;
+  --up: #0b7d5d;
+  --down: #b91c1c;
+  /* Darkened from the dark theme's #c48a1f to clear 4.5:1 on white (4.92:1);
+     that value only manages 3:1 here. */
+  --stale: #8f6a2e;
+  --gain: #15803d;
+  --invested: #1d4ed8;
+
+  color-scheme: light;
 }
 
 /* Fluid root size replaces the old `zoom: 1.3` on the app shell.
@@ -74,13 +134,19 @@ body {
    Shell
    --------------------------------------------------------------------------- */
 .shell {
+  --shell-pad-block: clamp(1.25rem, 1rem + 2vw, 2rem);
+
   min-height: 100vh;
   min-height: 100dvh;
-  padding: clamp(1.25rem, 1rem + 2vw, 2rem) var(--gutter);
-  /* The native status bar overlays the WebView (see lib/native.js), so the
-     notch inset is added to the top gutter rather than replacing it. On the
-     web the inset is 0 and this collapses back to the clamp. */
-  padding-top: calc(clamp(1.25rem, 1rem + 2vw, 2rem) + env(safe-area-inset-top, 0px));
+  padding: var(--shell-pad-block) var(--gutter);
+  /* Summed, not max()'d like the others: the status bar is an occupied strip,
+     not a rounded corner to dodge. Content has to start below it *and* keep
+     its normal breathing room, or the eyebrow ends up flush against the clock.
+     Zero in a browser tab (Safari's own chrome already reserves that space),
+     so this changes nothing on the web — it earns its keep in the home-screen
+     app and in the Capacitor shell, where the web view really does start at
+     the physical top of the screen. */
+  padding-top: calc(var(--shell-pad-block) + env(safe-area-inset-top));
   padding-left: max(var(--gutter), env(safe-area-inset-left));
   padding-right: max(var(--gutter), env(safe-area-inset-right));
   padding-bottom: max(2rem, env(safe-area-inset-bottom));
@@ -94,8 +160,64 @@ body {
 /* ---------------------------------------------------------------------------
    Masthead
    --------------------------------------------------------------------------- */
-.eyebrow {
+/* The eyebrow and the theme toggle share the top line, which is what puts the
+   button at the top right without taking it out of the document flow. */
+.masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 0.25rem;
+}
+
+.masthead-toggles {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.theme-toggle,
+.locale-toggle,
+.account-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  /* --muted rather than --dim: these are UI components (icon + text pill),
+     and --dim against the dark background is 2.69:1, under the 3:1 those
+     need as non-text/UI elements. */
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+/* Pulled up and out so the 44px targets do not push the heading down or
+   inset from the page gutter. Only the outer edges of the pair need the
+   pull — .theme-toggle sits last in the row, against the gutter. */
+.masthead-toggles {
+  margin: -0.625rem -0.5rem -0.625rem 0;
+}
+
+.locale-toggle {
+  padding-inline: 0.75rem;
+  font-family: var(--serif);
+  font-size: 0.8125rem;
+}
+
+.theme-toggle:hover:not(:disabled),
+.locale-toggle:hover,
+.account-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.eyebrow {
   color: var(--dim);
   font-size: 0.6875rem;
   letter-spacing: 0.1875em;
@@ -178,6 +300,12 @@ body {
   color: var(--label);
 }
 
+.quote-stale {
+  margin-top: 0.375rem;
+  color: var(--stale);
+  font-size: 0.6875rem;
+}
+
 .quote-chart {
   height: clamp(11rem, 9rem + 12vw, 13.75rem);
   margin-top: 0.25rem;
@@ -258,7 +386,6 @@ body {
   line-height: 1;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
-  /* Keeps the tap target reasonable without making the control look chunky. */
   min-height: 2rem;
 }
 
@@ -267,8 +394,147 @@ body {
 }
 
 .range-tab[aria-pressed='true'] {
-  background: #1f1f1f;
+  background: var(--tab-active-bg);
+  box-shadow: var(--tab-active-shadow);
   color: var(--text);
+}
+
+/* 32px is a comfortable pill for a cursor and an awkward target for a thumb.
+   Growing it only for coarse pointers keeps the desktop control slim.
+   An earlier attempt used an oversized ::after instead, but .range-tabs scrolls
+   on x — which forces overflow-y to compute to auto — so the pseudo-element
+   made the strip scrollable vertically. */
+@media (pointer: coarse) {
+  .range-tab {
+    min-height: 2.75rem;
+    /* Only the height serves the thumb. Widening the padding as well (it was
+       0.9375rem) pushed all seven tabs past the strip on every common phone —
+       29px over at 390, 44px at 375 — so "Max" sat clipped behind a scroll
+       nobody could see a reason for. At 0.6875rem they fit exactly from 375px
+       up, and 320px still scrolls, which is the documented fallback. */
+    padding-inline: 0.6875rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Price alert
+   --------------------------------------------------------------------------- */
+.price-alert-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.875rem;
+  background: transparent;
+  border: 1px solid var(--track);
+  border-radius: var(--radius-input);
+  color: var(--muted);
+  padding: 0.5rem 0.875rem;
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-height: 2.25rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.price-alert-cta:hover:not(:disabled) {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.price-alert-cta:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.price-alert-form {
+  margin-top: 0.875rem;
+}
+
+.price-alert-form-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.price-alert-form-row .amount {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.price-alert-btn {
+  white-space: nowrap;
+  flex: 0 0 auto;
+  background: var(--accent-solid);
+  color: var(--accent-solid-text);
+  border: none;
+  border-radius: var(--radius-input);
+  padding: 0 0.875rem;
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 2.75rem;
+}
+
+.price-alert-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--track);
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.price-alert-armed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.875rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-input);
+  color: var(--text);
+  padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+  font-size: 0.75rem;
+}
+
+.price-alert-remove {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.price-alert-remove:hover {
+  color: var(--text);
+}
+
+/* Green rather than the amber used for a stale price: reaching an alert
+   target is the intended outcome the visitor asked for, not a degraded
+   state to be cautious about. */
+.price-alert-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+  background: var(--surface-2);
+  border: 1px solid var(--gain);
+  border-radius: var(--radius-input);
+  color: var(--gain);
+  padding: 0.625rem 0.625rem 0.625rem 0.875rem;
+  font-size: 0.75rem;
+}
+
+.price-alert-dismiss {
+  background: transparent;
+  border: 1px solid var(--gain);
+  border-radius: var(--radius-input);
+  color: var(--gain);
+  font-size: 0.6875rem;
+  padding: 0.25rem 0.625rem;
+  cursor: pointer;
 }
 
 /* ---------------------------------------------------------------------------
@@ -440,7 +706,7 @@ input[type='range'] {
   appearance: none;
   display: block;
   width: 100%;
-  height: 2.5rem;
+  height: 2.75rem;
   margin: 0;
   background: transparent;
   outline: none;
@@ -527,6 +793,50 @@ input[type='text'].amount:focus {
 }
 
 /* ---------------------------------------------------------------------------
+   Amount steppers
+   --------------------------------------------------------------------------- */
+.field {
+  min-width: 0;
+}
+
+.stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 0.375rem;
+}
+
+.stepper .amount {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.stepper-btn {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  min-height: 2.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--track);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.stepper-btn:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+/* ---------------------------------------------------------------------------
    Save
    --------------------------------------------------------------------------- */
 .save-row {
@@ -538,8 +848,8 @@ input[type='text'].amount:focus {
 }
 
 .save-btn {
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--accent-solid);
+  color: var(--accent-solid-text);
   border: none;
   border-radius: var(--radius-input);
   padding: 0.75rem 1.5rem;
@@ -554,9 +864,14 @@ input[type='text'].amount:focus {
 }
 
 @media (max-width: 26em) {
-  /* A thumb-friendly full-width button beats a small one adrift on a phone. */
+  /* A thumb-friendly pair beats two small buttons adrift on a phone. Save gets
+     the larger share because it is the one people came for. */
   .save-btn {
-    width: 100%;
+    flex: 2 1 0;
+  }
+  .reset-btn {
+    flex: 1 1 0;
+    padding-inline: 0.5rem;
   }
 }
 
@@ -569,8 +884,77 @@ input[type='text'].amount:focus {
   cursor: default;
 }
 
+.reset-btn {
+  /* The full phrase wrapped to two lines in the narrow half of the row, leaving
+     it 12px taller than Save; the accessible name still carries the long form. */
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid var(--track);
+  border-radius: var(--radius-input);
+  color: var(--muted);
+  padding: 0.75rem 1rem;
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-height: 2.75rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.reset-btn:hover:not(:disabled) {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.reset-btn:disabled {
+  color: var(--faint);
+  border-color: var(--border-2);
+  cursor: default;
+}
+
 .save-hint {
   color: var(--dim);
+  font-size: 0.6875rem;
+  flex-basis: 100%;
+}
+
+/* ---------------------------------------------------------------------------
+   Share
+   --------------------------------------------------------------------------- */
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  margin-top: 0.875rem;
+}
+
+.share-btn {
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid var(--track);
+  border-radius: var(--radius-input);
+  color: var(--muted);
+  padding: 0.625rem 1.125rem;
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-height: 2.5rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.share-btn:hover:not(:disabled) {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.share-btn:disabled {
+  color: var(--faint);
+  border-color: var(--border-2);
+  cursor: default;
+}
+
+.share-error {
+  color: var(--down);
   font-size: 0.6875rem;
 }
 
@@ -605,6 +989,28 @@ input[type='text'].amount:focus {
 }
 
 /* ---------------------------------------------------------------------------
+   Goal seek
+   --------------------------------------------------------------------------- */
+.goal {
+  margin-top: 2rem;
+  padding: 1.25rem clamp(1rem, 0.75rem + 1vw, 1.5rem);
+}
+
+.goal-heading {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.goal-result {
+  margin: 1rem 0 0;
+  color: var(--text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------------
    Footer
    --------------------------------------------------------------------------- */
 .disclaimer {
@@ -614,6 +1020,19 @@ input[type='text'].amount:focus {
   color: var(--dim);
   font-size: 0.6875rem;
   line-height: 1.6;
+}
+
+.footer-links {
+  margin-top: 0.75rem;
+  font-size: 0.6875rem;
+}
+
+.footer-links a {
+  color: var(--muted);
+}
+
+.footer-links a:hover {
+  color: var(--text);
 }
 
 /* ---------------------------------------------------------------------------
@@ -659,93 +1078,46 @@ input[type='text'].amount:focus {
 
 
 /* ---------------------------------------------------------------------------
-   Native shell
-
-   Rules scoped to `.native`, a class lib/native.js sets on <html> only inside
-   the iOS app. They would be wrong on the web: a page is expected to be
-   selectable and to answer a long press with a context menu.
-   --------------------------------------------------------------------------- */
-.native {
-  /* The grey flash WebKit paints over a tapped control reads as a rendering
-     glitch next to real UIKit buttons. */
-  -webkit-tap-highlight-color: transparent;
-}
-
-.native :where(button, label, .card-label, .eyebrow, .scale, .legend) {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* ---------------------------------------------------------------------------
-   Masthead row
-   --------------------------------------------------------------------------- */
-.masthead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.25rem;
-}
-
-.masthead .eyebrow {
-  margin-bottom: 0;
-  min-width: 0;
-}
-
-/* ---------------------------------------------------------------------------
    Account button
+
+   Sits in .masthead-toggles beside the theme and locale toggles and inherits
+   their shape above. Icon-only: three labelled pills would not survive a
+   320px viewport next to the eyebrow.
    --------------------------------------------------------------------------- */
-.account-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 55%;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  border-radius: 999px;
-  color: var(--muted);
-  font-family: var(--serif);
-  font-size: 0.6875rem;
-  padding: 0.4375rem 0.75rem;
-  cursor: pointer;
-  /* Same 44px floor Apple asks of native controls. */
-  min-height: 2.25rem;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.account-btn:hover:not(:disabled) {
-  border-color: var(--faint);
-  color: var(--text);
-}
-
 .account-btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-.account-btn-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .account-btn-avatar {
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 1.375rem;
+  height: 1.375rem;
   border-radius: 50%;
   object-fit: cover;
-  flex: 0 0 auto;
 }
 
-.account-btn-dot {
-  width: 0.375rem;
-  height: 0.375rem;
+/* The signed-out state: an outline of a head and shoulders, drawn rather than
+   imported so it inherits currentColor with the rest of the row. */
+.account-btn-glyph {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* A filled dot in the accent marks "signed in" when there is no avatar to
+   show, so the state is readable without opening the panel. */
+.account-btn-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
   border-radius: 50%;
-  background: var(--accent);
-  flex: 0 0 auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--accent);
+  font-family: var(--serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 /* ---------------------------------------------------------------------------
@@ -758,7 +1130,9 @@ input[type='text'].amount:focus {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.72);
+  /* A dark scrim in both themes: it is what separates the sheet from the page
+     behind it, and a pale one over a pale page separates nothing. */
+  background: rgba(0, 0, 0, 0.6);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
@@ -817,14 +1191,14 @@ input[type='text'].amount:focus {
 .sheet-close {
   background: transparent;
   border: none;
-  color: var(--dim);
+  color: var(--muted);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
   padding: 0.5rem;
   margin: -0.5rem;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
 }
 
 .sheet-close:hover {
@@ -833,7 +1207,7 @@ input[type='text'].amount:focus {
 
 .sheet-lede {
   margin: 0 0 1rem;
-  color: var(--dim);
+  color: var(--muted);
   font-size: 0.75rem;
   line-height: 1.6;
 }
@@ -868,8 +1242,8 @@ input[type='text'].amount:focus {
 
 .sheet-submit {
   margin-top: 1rem;
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--accent-solid);
+  color: var(--accent-solid-text);
   border: none;
   border-radius: var(--radius-input);
   padding: 0.8125rem 1.25rem;
@@ -900,7 +1274,7 @@ input[type='text'].amount:focus {
 
 .sheet-submit--danger {
   background: var(--down);
-  color: var(--bg);
+  color: #1a0505;
 }
 
 .sheet-link {
@@ -912,7 +1286,7 @@ input[type='text'].amount:focus {
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0.5rem;
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   align-self: center;
 }
 
@@ -1044,7 +1418,7 @@ input[type='text'].amount:focus {
 }
 
 .account-email {
-  color: var(--dim);
+  color: var(--muted);
   font-size: 0.75rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1074,7 +1448,7 @@ input[type='text'].amount:focus {
 }
 
 /* ---------------------------------------------------------------------------
-   Boot / callback screen
+   OAuth callback screen
    --------------------------------------------------------------------------- */
 .boot {
   display: flex;
@@ -1085,14 +1459,6 @@ input[type='text'].amount:focus {
 }
 
 .boot-text {
-  color: var(--dim);
+  color: var(--muted);
   font-size: 0.875rem;
-}
-
-/* The specific reason a chart failed, under the generic line. */
-.chart-note-detail {
-  color: var(--faint);
-  font-size: 0.6875rem;
-  max-width: 22rem;
-  overflow-wrap: break-word;
 }

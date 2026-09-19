@@ -9,25 +9,30 @@ import {
   YAxis,
 } from 'recharts'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import PriceAlert from './PriceAlert'
 import { apiUrl } from '../lib/api'
 import {
   formatEur,
   formatPct,
   formatQuoteTimestamp,
+  formatRelativeTime,
   formatSignedEur,
 } from '../lib/format'
+import { t } from '../lib/i18n'
+import { readCachedPrice, writeCachedPrice } from '../lib/priceCache'
 
-const UP = '#5ee3b9'
-const DOWN = '#f87171'
-
+// Labels ("1D", "5Y"...) are ticker-style abbreviations, unchanged across
+// locales. The long form (for the aria-label) comes from the dictionary —
+// this table only says which key holds it, so a typo in a locale string
+// cannot silently point a range at the wrong description.
 export const RANGES = [
-  { key: '1d', label: '1D', long: 'Последен ден' },
-  { key: '5d', label: '1W', long: 'Последна седмица' },
-  { key: '1mo', label: '1M', long: 'Последен месец' },
-  { key: '6mo', label: '6M', long: 'Последни 6 месеца' },
-  { key: '1y', label: '1Y', long: 'Последна година' },
-  { key: '5y', label: '5Y', long: 'Последни 5 години' },
-  { key: 'max', label: 'Max', long: 'От началото' },
+  { key: '1d', label: '1D', longKey: 'range1dLong' },
+  { key: '5d', label: '1W', longKey: 'range5dLong' },
+  { key: '1mo', label: '1M', longKey: 'range1moLong' },
+  { key: '6mo', label: '6M', longKey: 'range6moLong' },
+  { key: '1y', label: '1Y', longKey: 'range1yLong' },
+  { key: '5y', label: '5Y', longKey: 'range5yLong' },
+  { key: 'max', label: 'Max', longKey: 'rangeMaxLong' },
 ]
 
 function ChartNote({ children }) {
@@ -38,11 +43,14 @@ function ChartNote({ children }) {
   )
 }
 
-export default function Sxr8Chart() {
+export default function Sxr8Chart({ palette, locale }) {
   const [range, setRange] = useState('5y')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  // Set only when the current data came from the offline cache rather than a
+  // live fetch, so the UI can say so instead of presenting stale data as fresh.
+  const [staleSince, setStaleSince] = useState(null)
   const [attempt, setAttempt] = useState(0)
 
   // Ranges already fetched are kept so flipping between tabs is instant and
@@ -65,13 +73,14 @@ export default function Sxr8Chart() {
     setLoading(true)
     setError(null)
 
-    // `apiUrl` throws when a native build was compiled without an API base,
-    // so the call is made inside the chain rather than before it.
+    // `apiUrl` throws when a native build was compiled without an API base, so
+    // the call is made inside the chain: that turns the throw into a rejection
+    // the catch below already knows how to handle, cached price and all.
     Promise.resolve()
       .then(() =>
         fetch(apiUrl(`/api/sxr8?range=${range}`), {
           signal: controller.signal,
-          // Cross-origin from the iOS WebView, and there is nothing to send.
+          // Cross-origin from the native WebView, and there is nothing to send.
           credentials: 'omit',
         }),
       )
@@ -81,12 +90,21 @@ export default function Sxr8Chart() {
       })
       .then((payload) => {
         cache.current.set(range, payload)
+        writeCachedPrice(range, payload)
+        setStaleSince(null)
         setData(payload)
         setLoading(false)
       })
       .catch((cause) => {
         if (cause.name === 'AbortError') return
-        setError(String(cause.message || cause))
+        const cached = readCachedPrice(range)
+        if (cached) {
+          cache.current.set(range, cached.payload)
+          setStaleSince(cached.savedAt)
+          setData(cached.payload)
+        } else {
+          setError(String(cause.message || cause))
+        }
         setLoading(false)
       })
 
@@ -95,6 +113,7 @@ export default function Sxr8Chart() {
 
   const retry = useCallback(() => {
     cache.current.delete(range)
+    setStaleSince(null)
     setAttempt((n) => n + 1)
   }, [range])
 
@@ -125,7 +144,7 @@ export default function Sxr8Chart() {
   const { points, end, change, changePct, min, max } = series
   const activeRange = RANGES.find((entry) => entry.key === range) ?? RANGES[0]
   const isUp = (change ?? 0) >= 0
-  const lineColor = isUp ? UP : DOWN
+  const lineColor = isUp ? palette.up : palette.down
 
   // The reference labels sit outside the plot on the right, so the gutter has
   // to be reserved — but 64px of a phone-width chart is too much to give away.
@@ -133,32 +152,41 @@ export default function Sxr8Chart() {
   const labelSize = isNarrow ? 10 : 11
 
   return (
-    <section className="quote" aria-label="Цена на SXR8">
+    <section className="quote" aria-label={t(locale, 'quoteAriaLabel')}>
       <div className="card-label">SXR8 · iShares Core S&amp;P 500</div>
 
-      <div className="quote-price num">{formatEur(end)}</div>
+      <div className="quote-price num">{formatEur(end, locale)}</div>
 
       {end != null && (
         <div className="quote-delta">
           <span className="quote-delta-value num" style={{ color: lineColor }}>
-            {formatSignedEur(change)} {isUp ? '▲' : '▼'} {formatPct(changePct)}
+            {formatSignedEur(change, locale)} {isUp ? '▲' : '▼'} {formatPct(changePct, locale)}
           </span>
-          <span className="quote-delta-range">· {activeRange.long}</span>
+          <span className="quote-delta-range">· {t(locale, activeRange.longKey)}</span>
+        </div>
+      )}
+
+      {/*
+        Shown when the fetch failed and a cached price filled in instead — see
+        readCachedPrice in Sxr8Chart's effect. Without this the visitor has no
+        way to tell a live price from Tuesday's, which matters for a figure
+        people might act on.
+      */}
+      {staleSince != null && (
+        <div className="quote-stale" role="status">
+          {t(locale, 'quoteStale', { time: formatRelativeTime(staleSince, locale) })}
         </div>
       )}
 
       <div className="quote-chart">
         {loading ? (
-          <ChartNote>Зареждане…</ChartNote>
+          <ChartNote>{t(locale, 'quoteLoading')}</ChartNote>
         ) : error ? (
           <ChartNote>
             <span className="chart-note-stack">
-              {/* The message matters here: a missing VITE_API_BASE_URL in a
-                  native build looks exactly like a network failure without it. */}
-              <span>Грешка при зареждане на данните</span>
-              <span className="chart-note-detail">{error}</span>
+              {t(locale, 'quoteError')}
               <button type="button" className="retry" onClick={retry}>
-                Опитай отново
+                {t(locale, 'quoteRetry')}
               </button>
             </span>
           </ChartNote>
@@ -170,7 +198,7 @@ export default function Sxr8Chart() {
             >
               <defs>
                 <linearGradient id="sxr8Grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={lineColor} stopOpacity={0.25} />
+                  <stop offset="0%" stopColor={lineColor} stopOpacity={palette.quoteFillOpacity} />
                   <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
                 </linearGradient>
                 <filter id="sxr8Glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -187,26 +215,26 @@ export default function Sxr8Chart() {
 
               <Tooltip
                 contentStyle={{
-                  background: '#0d0d0d',
-                  border: '1px solid #333',
+                  background: palette.tooltipBg,
+                  border: `1px solid ${palette.tooltipBorder}`,
                   borderRadius: 6,
                   fontFamily: "'Times New Roman', serif",
                   fontSize: 12,
                 }}
-                labelStyle={{ color: '#888' }}
+                labelStyle={{ color: palette.tooltipLabel }}
                 itemStyle={{ color: lineColor }}
-                labelFormatter={(value) => formatQuoteTimestamp(value, range)}
-                formatter={(value) => [formatEur(value), 'SXR8']}
+                labelFormatter={(value) => formatQuoteTimestamp(value, range, locale)}
+                formatter={(value) => [formatEur(value, locale), 'SXR8']}
               />
 
               <ReferenceLine
                 y={min}
-                stroke="#2a2a2a"
+                stroke={palette.minLine}
                 strokeDasharray="2 4"
                 label={{
-                  value: formatEur(min).replace(' €', ''),
+                  value: formatEur(min, locale).replace(' €', ''),
                   position: 'right',
-                  fill: '#777',
+                  fill: palette.minLabel,
                   fontSize: labelSize,
                   fontFamily: "'Times New Roman', serif",
                 }}
@@ -215,9 +243,9 @@ export default function Sxr8Chart() {
                 y={max}
                 stroke="transparent"
                 label={{
-                  value: formatEur(max).replace(' €', ''),
+                  value: formatEur(max, locale).replace(' €', ''),
                   position: 'right',
-                  fill: '#bbb',
+                  fill: palette.maxLabel,
                   fontSize: labelSize,
                   fontFamily: "'Times New Roman', serif",
                 }}
@@ -230,30 +258,34 @@ export default function Sxr8Chart() {
                 strokeWidth={2}
                 fill="url(#sxr8Grad)"
                 dot={false}
-                filter="url(#sxr8Glow)"
+                // The glow reads as a halo lifting the line off a dark card.
+                // On white it just muddies the stroke, so it is dark-only.
+                filter={palette.glow ? 'url(#sxr8Glow)' : undefined}
                 isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <ChartNote>Няма налични данни</ChartNote>
+          <ChartNote>{t(locale, 'quoteNoData')}</ChartNote>
         )}
       </div>
 
-      <div className="range-tabs" role="group" aria-label="Времеви обхват">
+      <div className="range-tabs" role="group" aria-label={t(locale, 'quoteRangeGroupAriaLabel')}>
         {RANGES.map((entry) => (
           <button
             key={entry.key}
             type="button"
             className="range-tab"
             aria-pressed={range === entry.key}
-            aria-label={`${entry.label} — ${entry.long}`}
+            aria-label={`${entry.label} — ${t(locale, entry.longKey)}`}
             onClick={() => setRange(entry.key)}
           >
             {entry.label}
           </button>
         ))}
       </div>
+
+      <PriceAlert price={end} locale={locale} />
     </section>
   )
 }

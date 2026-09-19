@@ -1,33 +1,53 @@
+import { t } from '../lib/i18n'
+
 /**
- * Clerk answers in English with a stable error code. The app is Bulgarian
- * throughout, so the codes worth showing a user are translated here and
- * anything unmapped falls back to Clerk's own text rather than to a shrug.
+ * Clerk answers in English with a stable error code. The app speaks Bulgarian
+ * and English through its own dictionary, so the codes worth showing a user
+ * are mapped onto it and anything unmapped falls back to Clerk's own text
+ * rather than to a shrug.
  */
-const MESSAGES = {
-  form_identifier_not_found: 'Няма акаунт с този имейл.',
-  form_identifier_exists: 'Вече има акаунт с този имейл — влез вместо това.',
-  form_param_format_invalid: 'Имейлът изглежда невалиден.',
-  form_param_nil: 'Попълни полето.',
-  form_code_incorrect: 'Кодът е грешен. Провери го и опитай отново.',
-  verification_expired: 'Кодът изтече. Поискай нов.',
-  verification_failed: 'Твърде много опити с грешен код. Поискай нов.',
-  too_many_requests: 'Твърде много опити. Изчакай малко и опитай отново.',
-  session_exists: 'Вече си влязъл в друга сесия.',
-  captcha_invalid: 'Проверката за бот не мина. Опитай отново.',
+const KEY_OF = {
+  form_identifier_not_found: 'clerkIdentifierNotFound',
+  form_identifier_exists: 'clerkIdentifierExists',
+  form_param_format_invalid: 'clerkFormatInvalid',
+  form_param_nil: 'clerkParamNil',
+  form_code_incorrect: 'clerkCodeIncorrect',
+  verification_expired: 'clerkVerificationExpired',
+  verification_failed: 'clerkVerificationFailed',
+  too_many_requests: 'clerkTooManyRequests',
+  session_exists: 'clerkSessionExists',
+  captcha_invalid: 'clerkCaptchaInvalid',
 }
 
-export function messageOf(cause) {
+/** Returns null when there is nothing worth telling the user. */
+export function messageOf(cause, locale) {
+  // Dismissing the OAuth sheet is a decision, not a failure.
   if (cause?.name === 'SsoCancelled') return null
 
   const first = cause?.errors?.[0]
   if (first) {
-    return (
-      MESSAGES[first.code] ?? first.longMessage ?? first.message ?? 'Нещо се обърка.'
-    )
+    const key = KEY_OF[first.code]
+    if (key) return t(locale, key)
+    return first.longMessage ?? first.message ?? t(locale, 'authErrorGeneric')
   }
 
-  return cause?.message ?? 'Нещо се обърка.'
+  // Errors this app raised itself carry a translation key rather than text.
+  if (cause?.messageKey) return t(locale, cause.messageKey)
+
+  return cause?.message ?? t(locale, 'authErrorGeneric')
 }
 
 export const isNotFound = (cause) =>
   cause?.errors?.some((error) => error.code === 'form_identifier_not_found') ?? false
+
+/**
+ * An error the app raised, carrying a dictionary key instead of a fixed
+ * string — the locale is not known where these are thrown.
+ */
+export class AuthError extends Error {
+  constructor(messageKey) {
+    super(messageKey)
+    this.name = 'AuthError'
+    this.messageKey = messageKey
+  }
+}

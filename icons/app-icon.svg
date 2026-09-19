@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>S&amp;P 500</title>
+  <!--
+    App icon: a jagged rising line ending in an arrowhead, over an "S&P 500"
+    wordmark. Source for the 152–512px rasters (iOS home screen, Android,
+    manifest). The tab favicon is public/favicon.svg — same artwork without the
+    wordmark, because seven glyphs cannot survive 16px.
+
+    The wordmark is set as type rather than drawn as paths, which is safe here
+    only because this file is never served: the generator rasterises it once and
+    the PNGs ship. public/favicon.svg, which IS served, contains no text at all,
+    so no viewer ever depends on a font resolving.
+
+    Regenerating needs Liberation Sans (Arial or Helvetica substitute
+    acceptably — the stack falls back in that order). Without any of them the
+    metrics shift and the wordmark will need re-centring.
+  -->
+  <defs>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5ee3b9" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#5ee3b9" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="lineGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="textGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="13"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#0b0f10"/>
+
+  <!--
+    Both ends of the fill continue along the adjacent segment's slope to the
+    frame edge (y=747 at x=0, y=9 at x=1024) so its boundary contains no
+    straight edge. Closing it under the line's end instead left a long diagonal
+    wedge pointing at the corner, which was the most visible thing in the icon.
+  -->
+  <path d="M0 747 L120 620 L300 430 L395 510 L520 330 L620 440 L800 248 L1024 9 L1024 1024 L0 1024 Z"
+        fill="url(#area)"/>
+
+  <!-- Glow pass and sharp pass share the same geometry; the arrowhead is a
+       plain triangle aligned to the final segment's direction. -->
+  <g filter="url(#lineGlow)" opacity="0.75">
+    <path d="M120 620 L300 430 L395 510 L520 330 L620 440 L800 248"
+          fill="none" stroke="#5ee3b9" stroke-width="58"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M880 162 L853 281 L763 197 Z" fill="#5ee3b9"/>
+  </g>
+  <path d="M120 620 L300 430 L395 510 L520 330 L620 440 L800 248"
+        fill="none" stroke="#5ee3b9" stroke-width="58"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M880 162 L853 281 L763 197 Z" fill="#5ee3b9"/>
+
+  <!-- Lifted a step above the line's mint: the wordmark's thinner strokes read
+       dimmer than the heavy stroke at the same colour, so matching hex values
+       would not have matched apparent brightness. -->
+  <g font-family="Liberation Sans, Arial, Helvetica, sans-serif" font-weight="bold"
+     font-size="175" letter-spacing="2" text-anchor="middle" fill="#8ff2dc">
+    <text x="512" y="836" filter="url(#textGlow)" opacity="0.6">S&amp;P 500</text>
+    <text x="512" y="836">S&amp;P 500</text>
+  </g>
+</svg>

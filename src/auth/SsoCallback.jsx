@@ -11,7 +11,7 @@ import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react'
 export default function SsoCallback() {
   return (
     <div className="boot" role="status" aria-live="polite">
-      <p className="boot-text">Завършване на входа…</p>
+      <p className="boot-text">…</p>
       <AuthenticateWithRedirectCallback
         signInFallbackRedirectUrl="/"
         signUpFallbackRedirectUrl="/"

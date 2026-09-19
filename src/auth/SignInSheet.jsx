@@ -2,19 +2,20 @@ import { useCallback, useRef, useState } from 'react'
 import { useClerk, useSignIn, useSignUp } from '@clerk/clerk-react'
 import Sheet from './Sheet'
 import { AppleMark, GoogleMark } from './ProviderIcons'
-import { isNotFound, messageOf } from './errors'
+import { AuthError, isNotFound, messageOf } from './errors'
 import { startSso } from './ssoFlow'
-import { tapFeedback } from '../lib/native'
+import { hapticSuccess } from '../lib/haptics'
+import { t } from '../lib/i18n'
 
 const PROVIDERS = [
   // Apple first, and not only for looks: App Store review requires Sign in
   // with Apple to be offered wherever another social login is (guideline
   // 4.8), and reviewers check that it is not buried below the alternatives.
-  { strategy: 'oauth_apple', label: 'Продължи с Apple', Mark: AppleMark },
-  { strategy: 'oauth_google', label: 'Продължи с Google', Mark: GoogleMark },
+  { strategy: 'oauth_apple', labelKey: 'authWithApple', Mark: AppleMark },
+  { strategy: 'oauth_google', labelKey: 'authWithGoogle', Mark: GoogleMark },
 ]
 
-export default function SignInSheet({ onClose }) {
+export default function SignInSheet({ locale, onClose }) {
   const { signIn, isLoaded: signInReady } = useSignIn()
   const { signUp, isLoaded: signUpReady } = useSignUp()
   const { setActive } = useClerk()
@@ -31,34 +32,36 @@ export default function SignInSheet({ onClose }) {
 
   const ready = signInReady && signUpReady
 
-  const run = useCallback(async (key, work) => {
-    setBusy(key)
-    setError(null)
-    try {
-      await work()
-    } catch (cause) {
-      // A cancelled OAuth sheet is a decision, not a failure — messageOf
-      // returns null for it and the panel stays as it was.
-      setError(messageOf(cause))
-    } finally {
-      setBusy(null)
-    }
-  }, [])
+  const run = useCallback(
+    async (key, work) => {
+      setBusy(key)
+      setError(null)
+      try {
+        await work()
+      } catch (cause) {
+        // A cancelled OAuth sheet is a decision, not a failure — messageOf
+        // returns null for it and the panel stays as it was.
+        setError(messageOf(cause, locale))
+      } finally {
+        setBusy(null)
+      }
+    },
+    [locale],
+  )
 
   const sendCode = (event) => {
     event.preventDefault()
     return run('code', async () => {
       const identifier = email.trim()
-      if (!identifier) throw new Error('Въведи имейл адрес.')
+      if (!identifier) throw new AuthError('authErrorNoEmail')
 
       try {
         const attempt = await signIn.create({ identifier })
         const factor = attempt.supportedFirstFactors?.find(
           (candidate) => candidate.strategy === 'email_code',
         )
-        if (!factor) {
-          throw new Error('Този акаунт не поддържа вход с код по имейл.')
-        }
+        if (!factor) throw new AuthError('authErrorNoCodeFactor')
+
         await signIn.prepareFirstFactor({
           strategy: 'email_code',
           emailAddressId: factor.emailAddressId,
@@ -87,11 +90,11 @@ export default function SignInSheet({ onClose }) {
           : await signUp.attemptEmailAddressVerification({ code: code.trim() })
 
       if (result.status !== 'complete' || !result.createdSessionId) {
-        throw new Error('Входът не завърши. Опитай отново.')
+        throw new AuthError('authErrorIncomplete')
       }
 
       await setActive({ session: result.createdSessionId })
-      await tapFeedback()
+      hapticSuccess()
       onClose()
     })
   }
@@ -100,24 +103,21 @@ export default function SignInSheet({ onClose }) {
     run(strategy, async () => {
       const status = await startSso({ strategy, signIn, signUp, setActive })
       if (status === 'complete') {
-        await tapFeedback()
+        hapticSuccess()
         onClose()
       } else if (status !== 'redirecting') {
-        throw new Error('Доставчикът поиска още стъпки, които приложението не поддържа.')
+        throw new AuthError('authErrorProviderSteps')
       }
     })
 
   return (
-    <Sheet title="Вход" onClose={onClose}>
+    <Sheet title={t(locale, 'authSignIn')} locale={locale} onClose={onClose}>
       {step === 'start' ? (
         <>
-          <p className="sheet-lede">
-            Влез, за да пазиш настройките си и да ги намериш на всяко устройство.
-            Калкулаторът работи и без акаунт.
-          </p>
+          <p className="sheet-lede">{t(locale, 'authLede')}</p>
 
           <div className="sso-buttons">
-            {PROVIDERS.map(({ strategy, label, Mark }) => (
+            {PROVIDERS.map(({ strategy, labelKey, Mark }) => (
               <button
                 key={strategy}
                 type="button"
@@ -128,18 +128,18 @@ export default function SignInSheet({ onClose }) {
                 <span className="sso-glyph">
                   <Mark />
                 </span>
-                {busy === strategy ? 'Отваряне…' : label}
+                {busy === strategy ? t(locale, 'authOpening') : t(locale, labelKey)}
               </button>
             ))}
           </div>
 
           <div className="sheet-divider">
-            <span>или с имейл</span>
+            <span>{t(locale, 'authOrEmail')}</span>
           </div>
 
           <form onSubmit={sendCode} className="sheet-form">
             <label className="field-label" htmlFor="auth-email">
-              Имейл
+              {t(locale, 'authEmail')}
             </label>
             <input
               id="auth-email"
@@ -150,7 +150,7 @@ export default function SignInSheet({ onClose }) {
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder="ime@primer.bg"
+              placeholder={t(locale, 'authEmailPlaceholder')}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
@@ -163,24 +163,24 @@ export default function SignInSheet({ onClose }) {
               className="sheet-submit"
               disabled={!ready || busy !== null}
             >
-              {busy === 'code' ? 'Изпращане…' : 'Изпрати код'}
+              {busy === 'code' ? t(locale, 'authSending') : t(locale, 'authSendCode')}
             </button>
           </form>
         </>
       ) : (
         <form onSubmit={verifyCode} className="sheet-form">
           <p className="sheet-lede">
-            Изпратихме шестцифрен код на <strong>{email.trim()}</strong>.
+            {t(locale, 'authCodeSentTo', { email: email.trim() })}
           </p>
           <label className="field-label" htmlFor="auth-code">
-            Код
+            {t(locale, 'authCode')}
           </label>
           <input
             id="auth-code"
             className="sheet-input num"
             type="text"
             inputMode="numeric"
-            // Lets iOS offer the code straight from the Messages/Mail banner.
+            // Lets iOS offer the code straight from the Mail notification.
             autoComplete="one-time-code"
             maxLength={6}
             placeholder="000000"
@@ -189,7 +189,7 @@ export default function SignInSheet({ onClose }) {
             required
           />
           <button type="submit" className="sheet-submit" disabled={busy !== null}>
-            {busy === 'verify' ? 'Проверка…' : 'Потвърди'}
+            {busy === 'verify' ? t(locale, 'authVerifying') : t(locale, 'authVerify')}
           </button>
           <button
             type="button"
@@ -199,7 +199,7 @@ export default function SignInSheet({ onClose }) {
               setError(null)
             }}
           >
-            ← Друг имейл
+            {t(locale, 'authOtherEmail')}
           </button>
         </form>
       )}

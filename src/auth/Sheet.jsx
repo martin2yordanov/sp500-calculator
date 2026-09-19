@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { t } from '../lib/i18n'
 
 /**
  * The modal shell both auth panels sit in. It slides up from the bottom
  * because that is where a thumb is, and it is rendered through a portal so the
  * page's own stacking contexts (the charts each create one) cannot clip it.
  */
-export default function Sheet({ title, onClose, children }) {
+export default function Sheet({ title, locale, onClose, children }) {
   const panelRef = useRef(null)
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function Sheet({ title, onClose, children }) {
             type="button"
             className="sheet-close"
             onClick={onClose}
-            aria-label="Затвори"
+            aria-label={t(locale, 'authClose')}
           >
             ✕
           </button>
