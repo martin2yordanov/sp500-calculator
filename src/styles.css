@@ -177,7 +177,8 @@ body {
 }
 
 .theme-toggle,
-.locale-toggle {
+.locale-toggle,
+.account-btn {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -208,8 +209,9 @@ body {
   font-size: 0.8125rem;
 }
 
-.theme-toggle:hover,
-.locale-toggle:hover {
+.theme-toggle:hover:not(:disabled),
+.locale-toggle:hover,
+.account-btn:hover:not(:disabled) {
   color: var(--text);
   border-color: var(--border);
   background: var(--surface-2);
@@ -1072,4 +1074,391 @@ input[type='text'].amount:focus {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Account button
+
+   Sits in .masthead-toggles beside the theme and locale toggles and inherits
+   their shape above. Icon-only: three labelled pills would not survive a
+   320px viewport next to the eyebrow.
+   --------------------------------------------------------------------------- */
+.account-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.account-btn-avatar {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* The signed-out state: an outline of a head and shoulders, drawn rather than
+   imported so it inherits currentColor with the rest of the row. */
+.account-btn-glyph {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* A filled dot in the accent marks "signed in" when there is no avatar to
+   show, so the state is readable without opening the panel. */
+.account-btn-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--accent);
+  font-family: var(--serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------------
+   Auth sheet
+   --------------------------------------------------------------------------- */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* A dark scrim in both themes: it is what separates the sheet from the page
+     behind it, and a pale one over a pale page separates nothing. */
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+@media (min-width: 34em) {
+  .sheet-backdrop {
+    align-items: center;
+  }
+}
+
+.sheet {
+  width: 100%;
+  max-width: 24rem;
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 16px 16px 0 0;
+  padding: 1.25rem var(--gutter);
+  /* Clears the home indicator when the sheet is flush with the bottom edge. */
+  padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1rem));
+  animation: sheet-in 0.22s ease-out;
+}
+
+@media (min-width: 34em) {
+  .sheet {
+    border-radius: var(--radius-card);
+    padding-bottom: 1.5rem;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(1.5rem);
+    opacity: 0;
+  }
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.sheet-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.sheet-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+.sheet-close:hover {
+  color: var(--text);
+}
+
+.sheet-lede {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.sheet-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--track);
+  border-radius: var(--radius-input);
+  color: var(--text);
+  padding: 0.75rem;
+  font-family: var(--serif);
+  /* Under 16px iOS zooms the page on focus and never zooms back out. */
+  font-size: max(16px, 0.875rem);
+  line-height: 1.4;
+  outline: none;
+  min-height: 2.75rem;
+}
+
+.sheet-input:focus {
+  border-color: var(--accent);
+}
+
+.sheet-input::placeholder {
+  color: var(--faint);
+}
+
+.sheet-submit {
+  margin-top: 1rem;
+  background: var(--accent-solid);
+  color: var(--accent-solid-text);
+  border: none;
+  border-radius: var(--radius-input);
+  padding: 0.8125rem 1.25rem;
+  font-family: var(--serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 2.75rem;
+  transition: opacity 0.15s;
+}
+
+.sheet-submit:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.sheet-submit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sheet-submit--quiet {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--track);
+}
+
+.sheet-submit--danger {
+  background: var(--down);
+  color: #1a0505;
+}
+
+.sheet-link {
+  margin-top: 0.875rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  min-height: 2.75rem;
+  align-self: center;
+}
+
+.sheet-link:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.sheet-link:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sheet-link--danger {
+  color: var(--down);
+  align-self: flex-start;
+  padding-left: 0;
+}
+
+.sheet-error {
+  margin: 0.875rem 0 0;
+  color: var(--down);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.sheet-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.25rem;
+  color: var(--label);
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.sheet-divider::before,
+.sheet-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-2);
+}
+
+/* ---------------------------------------------------------------------------
+   Social sign-in buttons
+   --------------------------------------------------------------------------- */
+.sso-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.sso-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--track);
+  border-radius: var(--radius-input);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  min-height: 2.875rem;
+  transition: border-color 0.15s;
+}
+
+.sso-btn:hover:not(:disabled) {
+  border-color: var(--faint);
+}
+
+.sso-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sso-glyph {
+  display: inline-flex;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.sso-glyph svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------------------------------------------------------------------------
+   Account panel
+   --------------------------------------------------------------------------- */
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.account-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.account-avatar--letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--accent);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.account-identity-text {
+  min-width: 0;
+}
+
+.account-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.account-email {
+  color: var(--muted);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-danger {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.account-danger-warning {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.account-danger-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-danger-actions .sheet-submit {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   OAuth callback screen
+   --------------------------------------------------------------------------- */
+.boot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--gutter);
+}
+
+.boot-text {
+  color: var(--muted);
+  font-size: 0.875rem;
 }

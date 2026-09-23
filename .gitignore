@@ -3,3 +3,8 @@ dist
 .vercel
 .DS_Store
 *.local
+
+# Secrets. .env.example is the committed template.
+.env
+.env.*
+!.env.example

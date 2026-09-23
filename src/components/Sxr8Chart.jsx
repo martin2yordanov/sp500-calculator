@@ -73,7 +73,17 @@ export default function Sxr8Chart({ palette, locale }) {
     setLoading(true)
     setError(null)
 
-    fetch(apiUrl(`/api/sxr8?range=${range}`), { signal: controller.signal })
+    // `apiUrl` throws when a native build was compiled without an API base, so
+    // the call is made inside the chain: that turns the throw into a rejection
+    // the catch below already knows how to handle, cached price and all.
+    Promise.resolve()
+      .then(() =>
+        fetch(apiUrl(`/api/sxr8?range=${range}`), {
+          signal: controller.signal,
+          // Cross-origin from the native WebView, and there is nothing to send.
+          credentials: 'omit',
+        }),
+      )
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         return response.json()

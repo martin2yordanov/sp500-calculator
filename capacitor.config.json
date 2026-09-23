@@ -10,5 +10,8 @@
   },
   "android": {
     "backgroundColor": "#080808"
+  },
+  "server": {
+    "iosScheme": "https"
   }
 }

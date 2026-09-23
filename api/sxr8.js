@@ -10,6 +10,8 @@
  * that most visitors never cause an upstream call at all.
  */
 
+import { applyCors } from './_lib/http.js'
+
 const SYMBOL = 'SXR8.DE'
 
 // Range is the only input, and it decides both the upstream window and the
@@ -75,6 +77,10 @@ async function attempt(variant, range, interval) {
 }
 
 export default async function handler(req, res) {
+  // The iOS build calls this from the `https://localhost` WebView origin, so
+  // the response needs CORS headers the web build never had to ask for.
+  if (applyCors(req, res)) return
+
   const requested = String(req.query.range ?? '5y')
   const config = RANGES[requested]
 

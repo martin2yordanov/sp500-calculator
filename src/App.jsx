@@ -9,11 +9,13 @@ import {
 } from 'recharts'
 import { Capacitor } from '@capacitor/core'
 import { Share } from '@capacitor/share'
+import AccountButton from './auth/AccountButton'
 import AmountField from './components/AmountField'
 import LocaleToggle from './components/LocaleToggle'
 import ShareButton from './components/ShareButton'
 import Sxr8Chart from './components/Sxr8Chart'
 import ThemeToggle from './components/ThemeToggle'
+import { useCloudSettings } from './hooks/useCloudSettings'
 import { useLocale } from './hooks/useLocale'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { useTheme } from './hooks/useTheme'
@@ -27,6 +29,7 @@ import {
   loadSettings,
   parseAmount,
   saveSettings,
+  settingsToParams,
 } from './lib/settings'
 import { CHART } from './lib/theme'
 
@@ -87,6 +90,20 @@ export default function App() {
     setProfitYear((current) => Math.min(current, years))
   }, [years])
 
+  // Called once per sign-in, with whatever the account last stored. The amount
+  // fields hold text, so the numbers have to be pushed back through String().
+  const applyRemoteSettings = useCallback((next) => {
+    setYears(next.years)
+    setRate(next.rate)
+    setGrowth(next.growth)
+    setMonthlyText(String(next.monthly))
+    setInitialText(String(next.initial))
+    setTargetText(String(next.target))
+    setProfitYear((current) => Math.min(current, next.years))
+  }, [])
+
+  const sync = useCloudSettings({ onRemoteSettings: applyRemoteSettings })
+
   const rows = useMemo(
     () => buildProjection({ years, monthly, initial, rate, yearlyRaise: growth }),
     [years, monthly, initial, rate, growth],
@@ -135,16 +152,24 @@ export default function App() {
     target === DEFAULTS.target
 
   const handleSave = useCallback(async () => {
-    const params = new URLSearchParams({
-      y: String(years),
-      m: String(monthly),
-      i: String(initial),
-      r: String(rate),
-      g: String(growth),
-      t: String(target),
-    })
-    window.history.replaceState({}, '', `?${params}`)
-    saveSettings({ years, monthly, initial, rate, growth, target })
+    window.history.replaceState({}, '', `?${settingsToParams(settings)}`)
+    saveSettings(settings)
+
+    // Started here rather than awaited in sequence: the share sheet below
+    // blocks until the visitor dismisses it, and the account write has no
+    // reason to queue behind that.
+    const cloudWrite = sync.active ? sync.push(settings) : Promise.resolve(false)
+
+    const finish = async (via) => {
+      // The account outcome wins the hint when there is one: the clipboard and
+      // the share sheet are both visible to the visitor, and a silent write to
+      // another device is not.
+      const storedInAccount = await cloudWrite
+      setSavedVia(storedInAccount ? 'account' : via)
+      hapticSuccess()
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    }
 
     // Inside the native shell there is no ambient "paste this somewhere"
     // affordance the way a desktop browser has — a share sheet is what a
@@ -153,10 +178,7 @@ export default function App() {
     if (Capacitor.isNativePlatform()) {
       try {
         await Share.share({ title: t(locale, 'eyebrow'), url: window.location.href })
-        hapticSuccess()
-        setSavedVia('share')
-        setSaved(true)
-        setTimeout(() => setSaved(false), 2000)
+        await finish('share')
         return
       } catch {
         // Dismissed by the visitor, or genuinely unavailable — fall through
@@ -166,16 +188,13 @@ export default function App() {
 
     try {
       await navigator.clipboard.writeText(window.location.href)
-      setSavedVia('clipboard')
+      await finish('clipboard')
     } catch {
       // Clipboard is blocked without a secure context or permission; the URL is
       // still updated, so the link remains shareable by hand.
-      setSavedVia(null)
+      await finish(null)
     }
-    hapticSuccess()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }, [years, monthly, initial, rate, growth, target, locale])
+  }, [settings, sync, locale])
 
   const handleReset = useCallback(() => {
     setYears(DEFAULTS.years)
@@ -198,6 +217,7 @@ export default function App() {
           <div className="masthead">
             <div className="eyebrow">{t(locale, 'eyebrow')}</div>
             <div className="masthead-toggles">
+              <AccountButton locale={locale} sync={sync} />
               <LocaleToggle locale={locale} onToggle={toggleLocale} />
               <ThemeToggle theme={theme} onToggle={toggle} locale={locale} />
             </div>
@@ -370,6 +390,7 @@ export default function App() {
           </button>
           <span className="save-hint" role="status" aria-live="polite">
             {saved && savedVia === 'clipboard' ? t(locale, 'saveHint') : ''}
+            {saved && savedVia === 'account' ? t(locale, 'saveHintAccount') : ''}
           </span>
         </div>
 
